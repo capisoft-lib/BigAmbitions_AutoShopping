@@ -519,6 +519,34 @@ namespace AutoShopping
             button.colors = colors;
         }
 
+        internal static Image GetVanillaButtonImage(Button button)
+        {
+            if (button == null)
+                return null;
+
+            var image = button.GetComponent<Image>();
+            if (image != null)
+                return image;
+
+            if (button.targetGraphic is Image target)
+                return target;
+
+            var graphic = button.transform.Find("Graphic");
+            return graphic != null ? graphic.GetComponent<Image>() : null;
+        }
+
+        internal static void ApplyVanillaButtonImageStyle(Image image, VanillaButtonStyle style)
+        {
+            if (image == null)
+                return;
+
+            EnsureInitialized();
+            ApplyVanillaButtonStyle(image, style);
+        }
+
+        internal static void SetVanillaButtonStyle(Button button, VanillaButtonStyle style) =>
+            ApplyVanillaButtonImageStyle(GetVanillaButtonImage(button), style);
+
         private static void ApplyVanillaButtonStyle(Image image, VanillaButtonStyle style)
         {
             switch (style)

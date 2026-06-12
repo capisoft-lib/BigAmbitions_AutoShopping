@@ -9,7 +9,7 @@ namespace AutoShopping
 {
     internal static class AutoShoppingPanel
     {
-        private const string RootName = "AutoShopping_Panel_v0133";
+        private const string RootName = "AutoShopping_Panel_v0134";
         private const float StatusFontSize = 15f;
         private const float RowHeight = 50f;
         private const float IconColumnWidth = 48f;
@@ -97,6 +97,7 @@ namespace AutoShopping
             internal TextMeshProUGUI PriceLabel;
             internal TextMeshProUGUI QtyLabel;
             internal Button BtnWayTo;
+            internal Image BtnWayToImage;
             internal Button BtnMinus;
             internal Button BtnPlus;
         }
@@ -677,6 +678,8 @@ namespace AutoShopping
             {
                 UpdateRowQuantities(session);
             }
+
+            RefreshWayToButtons();
         }
 
         internal static void RefreshFooterOnly()
@@ -1003,6 +1006,7 @@ namespace AutoShopping
                 bleedBottom: false);
             ConfigureSingleLineButtonLabel(btnWayTo);
             StretchRect(btnWayTo.GetComponent<RectTransform>());
+            var btnWayToImage = BaGameUiChrome.GetVanillaButtonImage(btnWayTo);
 
             var priceGo = new GameObject("Price", typeof(RectTransform));
             priceGo.transform.SetParent(rowGo.transform, false);
@@ -1069,6 +1073,7 @@ namespace AutoShopping
                 PriceLabel = priceLabel,
                 QtyLabel = qtyLabel,
                 BtnWayTo = btnWayTo,
+                BtnWayToImage = btnWayToImage,
                 BtnMinus = btnMinus,
                 BtnPlus = btnPlus
             };
@@ -1103,6 +1108,14 @@ namespace AutoShopping
             if (product == null)
                 return;
 
+            if (StoreItemRouteService.IsActiveItem(itemName))
+            {
+                StoreItemRouteService.Clear();
+                SetStatus(ModUiText.StatusIdle);
+                RefreshWayToButtons();
+                return;
+            }
+
             if (!StoreItemRouteService.TrySetRouteToItem(product.ItemName, out var error))
             {
                 SetStatus(error ?? ModUiText.ErrorUnreachable);
@@ -1110,6 +1123,29 @@ namespace AutoShopping
             }
 
             SetStatus(ModUiText.FormatStatusWayTo(product.DisplayName));
+            RefreshWayToButtons();
+        }
+
+        private static void RefreshWayToButtons()
+        {
+            var activeItem = StoreItemRouteService.ActiveItemName;
+            foreach (var row in _rows)
+            {
+                if (row?.Product == null)
+                    continue;
+
+                var image = row.BtnWayToImage;
+                if (image == null && row.BtnWayTo != null)
+                    image = row.BtnWayToImage = BaGameUiChrome.GetVanillaButtonImage(row.BtnWayTo);
+                if (image == null)
+                    continue;
+
+                var selected = !string.IsNullOrEmpty(activeItem) &&
+                               row.Product.ItemName == activeItem;
+                BaGameUiChrome.ApplyVanillaButtonImageStyle(
+                    image,
+                    selected ? VanillaButtonStyle.Green : VanillaButtonStyle.Blue);
+            }
         }
 
         private static void OnIncrease(string itemName)

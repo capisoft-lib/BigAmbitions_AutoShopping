@@ -1,4 +1,4 @@
-# Auto Shopping (v0.11.0)
+# Auto Shopping (v0.11.1)
 
 In-store shopping assistant for [Big Ambitions](https://store.steampowered.com/app/1331550/Big_Ambitions/). When you enter a supported store, the mod scans every purchasable shelf, builds a live catalog, and lets you plan a shopping run from a game-style HUD panel. Your character then walks, picks items, and checks out automatically.
 
@@ -32,7 +32,7 @@ Two HUD elements appear while you are inside a supported store (hidden during pa
 - Icon, display name, unit or box price, and stock state (out-of-stock items are blocked)
 - **Search** bar to filter by name
 - **Sort** by item name or price (click column headers: none → ascending → descending)
-- **Way to** — draws a NavMesh route on the floor to the nearest shelf for that item
+- **Way to** — draws a NavMesh route on the floor to the nearest shelf for that item; the button turns green while active, click again to clear the route
 - **+** / **−** — adjust desired quantity; picked quantity syncs as actions complete
 
 ### Container bar

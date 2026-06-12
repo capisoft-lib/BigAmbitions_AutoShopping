@@ -24,6 +24,12 @@ namespace AutoShopping
 
     internal static bool HasActiveRoute => !string.IsNullOrEmpty(_activeItemName);
 
+    internal static string ActiveItemName => _activeItemName;
+
+    internal static bool IsActiveItem(string itemName) =>
+      !string.IsNullOrEmpty(itemName) &&
+      string.Equals(_activeItemName, itemName, System.StringComparison.Ordinal);
+
     internal static bool TrySetRouteToItem(string itemName, out string errorMessage)
     {
       errorMessage = null;
