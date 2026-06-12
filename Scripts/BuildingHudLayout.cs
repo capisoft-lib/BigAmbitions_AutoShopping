@@ -1,76 +1,42 @@
-using System.Reflection;
-using UI;
-using UI.CurrentBuilding;
 using UnityEngine;
 
 namespace AutoShopping
 {
+    /// <summary>
+    /// Fixed store HUD placement. Toggle HUD uses vanilla reference width (370px);
+    /// main shopping panel is wider. No runtime UI tree scans or adaptive resizing.
+    /// </summary>
     internal static class BuildingHudLayout
     {
-        private static readonly FieldInfo BuildingPanelField = typeof(CurrentBuildingUI).GetField(
-            "panel",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        internal const float GapBelowBuildingPanel = 12f;
+        internal const float PanelWidth = BaGameUiChrome.RefPanelWidth;
+        internal const float MainPanelWidth = BaGameUiChrome.RefPanelWidth * 2f;
+        internal const float MainPanelTopScreenMargin =
+            80f + BaGameUiChrome.FooterStatusVerticalSavings + BaGameUiChrome.PanelTopClearanceSavings;
+        internal const float ToggleHudTopOffset = 180f;
         internal const float RightScreenMargin = 16f;
-        internal const float FallbackTopOffset = 180f;
 
-        internal static bool TryGetBuildingPanelRect(out CartScreenRect rect)
-        {
-            rect = default;
-            try
-            {
-                if (!InstanceBehavior<UIs>.IsInitialized)
-                    return false;
+        internal static float GetPanelWidth() => PanelWidth;
 
-                var buildingUi = InstanceBehavior<UIs>.Instance?.playerHUD?.currentBuildingUI;
-                if (buildingUi == null)
-                    return false;
-
-                var panel = BuildingPanelField?.GetValue(buildingUi) as GameObject;
-                if (panel == null || !panel.activeInHierarchy)
-                    return false;
-
-                var panelRect = panel.GetComponent<RectTransform>();
-                if (panelRect == null)
-                    return false;
-
-                return ShoppingCartLayout.TryReadScreenRect(panelRect, out rect);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>Match lateral HUD width to the in-game Bizphone / building panel when available.</summary>
-        internal static float GetReferenceHudWidth()
-        {
-            if (TryGetBuildingPanelRect(out var building) && building.Width > 20f)
-                return building.Width;
-
-            return BaGameUiChrome.RefPanelWidth;
-        }
+        internal static float GetMainPanelWidth() => MainPanelWidth;
 
         internal static Vector2 GetToggleHudPosition(float panelWidth, float panelHeight)
         {
             var x = Screen.width - RightScreenMargin - panelWidth;
-            float y;
-
-            if (TryGetBuildingPanelRect(out var building) && building.Width > 20f && building.Height > 20f)
-            {
-                y = building.Bottom - GapBelowBuildingPanel - panelHeight;
-            }
-            else
-            {
-                y = Screen.height - FallbackTopOffset - panelHeight;
-            }
-
+            var y = Screen.height - ToggleHudTopOffset - panelHeight;
             y = Mathf.Clamp(
                 y,
                 BaGameUiChrome.ScreenMarginY,
                 Screen.height - BaGameUiChrome.TopScreenMargin - panelHeight);
 
             return new Vector2(x, y);
+        }
+
+        internal static Vector2 GetMainPanelPosition(float panelHeight)
+        {
+            var bottom = BaGameUiChrome.ScreenMarginY
+                         + BaGameUiChrome.FallbackCartHeight
+                         + BaGameUiChrome.PanelGapAboveCart;
+            return new Vector2(BaGameUiChrome.ScreenMarginX, bottom);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Reflection;
 using Helpers;
 using PlayerActivity;
 using UI;
@@ -6,11 +7,18 @@ using UI.MiniMenu;
 using UI.Purchase;
 using UI.PurchaseVehicle;
 using UI.Smartphone;
+using UnityEngine;
 
 namespace AutoShopping
 {
     internal static class GameState
     {
+        private static readonly FieldInfo IsLoadingField = ResolveSceneLoadingField();
+        private static bool? _cachedSceneLoading;
+        private static float _nextSceneLoadingCheck;
+        private static bool? _cachedUiBlocking;
+        private static float _nextUiBlockingCheck;
+
         internal static bool IsWorldReady()
         {
             try
@@ -47,6 +55,10 @@ namespace AutoShopping
                 if (!BuildingManager.IsInsideBuilding)
                     return false;
 
+                var session = StoreSession.Current;
+                if (session != null && session.IsActive && session.Profile != null)
+                    return session.Profile.IsSupported;
+
                 var bm = InstanceBehavior<BuildingManager>.Instance;
                 if (bm == null || bm.businessType == null)
                     return false;
@@ -61,10 +73,10 @@ namespace AutoShopping
 
         internal static bool IsPedestrianInSupportedStore()
         {
-            if (!IsWorldReady() || StoreSession.Current == null)
+            if (!IsWorldReady() || StoreSession.Current == null || !StoreSession.Current.IsActive)
                 return false;
 
-            if (!IsInsideSupportedInterior())
+            if (!BuildingManager.IsInsideBuilding)
                 return false;
 
             try
@@ -80,8 +92,16 @@ namespace AutoShopping
             return true;
         }
 
-        internal static bool ShouldShowStoreShoppingUi() =>
-            IsPedestrianInSupportedStore() && !IsUiBlocking();
+        internal static bool ShouldShowStoreShoppingUi()
+        {
+            using (ModPerf.Measure("gamestate.should_show_ui"))
+            {
+                if (!IsPedestrianInSupportedStore())
+                    return false;
+
+                return !IsUiBlocking();
+            }
+        }
 
         internal static bool IsCheckoutUiBlocking()
         {
@@ -96,6 +116,18 @@ namespace AutoShopping
         }
 
         internal static bool IsUiBlocking()
+        {
+            var now = Time.unscaledTime;
+            if (_cachedUiBlocking.HasValue && now < _nextUiBlockingCheck)
+                return _cachedUiBlocking.Value;
+
+            _nextUiBlockingCheck = now + 0.15f;
+            using (ModPerf.Measure("gamestate.ui_blocking_compute"))
+                _cachedUiBlocking = ComputeUiBlocking();
+            return _cachedUiBlocking.Value;
+        }
+
+        private static bool ComputeUiBlocking()
         {
             try
             {
@@ -135,21 +167,39 @@ namespace AutoShopping
 
         private static bool IsSceneLoading()
         {
+            var now = Time.unscaledTime;
+            if (_cachedSceneLoading.HasValue && now < _nextSceneLoadingCheck)
+                return _cachedSceneLoading.Value;
+
+            _nextSceneLoadingCheck = now + 0.2f;
+
+            var loading = false;
             try
             {
-                var asm = typeof(BuildingManager).Assembly;
-                var loadScene = asm.GetType("LoadScene") ?? asm.GetType("UI.Load.LoadScene");
-                var field = loadScene?.GetField("isLoading",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                if (field != null && field.GetValue(null) is bool loading && loading)
-                    return true;
+                if (IsLoadingField != null && IsLoadingField.GetValue(null) is bool value)
+                    loading = value;
             }
             catch
             {
                 // ignore
             }
 
-            return false;
+            _cachedSceneLoading = loading;
+            return loading;
+        }
+
+        private static FieldInfo ResolveSceneLoadingField()
+        {
+            try
+            {
+                var asm = typeof(BuildingManager).Assembly;
+                var loadScene = asm.GetType("LoadScene") ?? asm.GetType("UI.Load.LoadScene");
+                return loadScene?.GetField("isLoading", BindingFlags.Public | BindingFlags.Static);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

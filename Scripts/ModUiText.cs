@@ -21,6 +21,8 @@ namespace AutoShopping
         internal static string ColItem => Loc("autoshopping_col_item", "ITEM");
         internal static string ColPrice => Loc("autoshopping_col_price", "PRICE");
         internal static string ColQty => Loc("autoshopping_col_qty", "QTY");
+        internal static string BtnWayTo => Loc("autoshopping_btn_way_to", "Way to");
+        internal static string SearchPlaceholder => Loc("autoshopping_search_placeholder", "Search items…");
         internal static string TotalLabel => Loc("autoshopping_total_label", "Total:");
         internal static string StoreUnsupported => Loc("autoshopping_store_unsupported", "This store type is not supported.");
         internal static string OutOfStock => Loc("autoshopping_out_of_stock", "Out of stock");
@@ -141,6 +143,9 @@ namespace AutoShopping
         internal static string FormatStatusDropping(string itemLabel) =>
             LocFormat("autoshopping_status_dropping", "Dropping {item}…", "item", itemLabel);
 
+        internal static string FormatStatusWayTo(string itemLabel) =>
+            LocFormat("autoshopping_status_way_to", "Route to {item}", "item", itemLabel);
+
         internal static string StatusPaying =>
             Loc("autoshopping_status_paying", "Walking to checkout…");
 
@@ -157,13 +162,16 @@ namespace AutoShopping
                 return;
 
             _nextLocalePoll = now + 0.5f;
-            var locale = ResolveLoadedLocale();
-            if (locale == _activeLocale)
-                return;
+            using (ModPerf.Measure("poll.locale"))
+            {
+                var locale = ResolveLoadedLocale();
+                if (locale == _activeLocale)
+                    return;
 
-            _activeLocale = locale;
-            AutoShoppingPanel.RefreshLocalizedText();
-            AutoShoppingToggleHud.RefreshLocalizedText();
+                _activeLocale = locale;
+                AutoShoppingPanel.RefreshLocalizedText();
+                AutoShoppingToggleHud.RefreshLocalizedText();
+            }
         }
 
         private static string LocFormat(string key, string fallback, string token, string value) =>

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using BigAmbitions.Items;
 using BigAmbitions.Tags;
 using Controllers;
@@ -285,7 +284,14 @@ namespace AutoShopping
             if (holder == null)
                 return 0;
 
-            return holder.GetCargoInstances().Count(x => !x.paid);
+            var count = 0;
+            foreach (var cargo in holder.GetCargoInstances())
+            {
+                if (!cargo.paid)
+                    count++;
+            }
+
+            return count;
         }
 
         internal static int CountUnpaidForItem(ICargoHolder holder, string itemName)
@@ -293,7 +299,34 @@ namespace AutoShopping
             if (holder == null || string.IsNullOrEmpty(itemName))
                 return 0;
 
-            return holder.GetCargoInstances().Count(x => !x.paid && x.itemName == itemName);
+            var count = 0;
+            foreach (var cargo in holder.GetCargoInstances())
+            {
+                if (!cargo.paid && cargo.itemName == itemName)
+                    count++;
+            }
+
+            return count;
+        }
+
+        internal static Dictionary<string, int> CountUnpaidByItem(ICargoHolder holder)
+        {
+            var counts = new Dictionary<string, int>();
+            if (holder == null)
+                return counts;
+
+            foreach (var cargo in holder.GetCargoInstances())
+            {
+                if (cargo.paid || string.IsNullOrEmpty(cargo.itemName))
+                    continue;
+
+                if (counts.TryGetValue(cargo.itemName, out var existing))
+                    counts[cargo.itemName] = existing + 1;
+                else
+                    counts[cargo.itemName] = 1;
+            }
+
+            return counts;
         }
 
         internal static float SumUnpaidTotal(ICargoHolder holder)
@@ -318,7 +351,14 @@ namespace AutoShopping
             if (holder == null)
                 return new List<CargoInstance>();
 
-            return holder.GetCargoInstances().Where(x => !x.paid).ToList();
+            var unpaid = new List<CargoInstance>();
+            foreach (var cargo in holder.GetCargoInstances())
+            {
+                if (!cargo.paid)
+                    unpaid.Add(cargo);
+            }
+
+            return unpaid;
         }
 
         internal static bool TryRemoveOneUnpaid(string itemName)
@@ -361,6 +401,7 @@ namespace AutoShopping
 
         internal static ItemController FindNearestPurchasableShelf(string itemName)
         {
+            using var perf = ModPerf.Measure("cargo.find_shelf");
             var bm = InstanceBehavior<BuildingManager>.Instance;
             if (bm == null)
                 return null;
@@ -370,6 +411,7 @@ namespace AutoShopping
 
         internal static ItemController FindNearestBasketProvider()
         {
+            using var perf = ModPerf.Measure("cargo.find_basket");
             var bm = InstanceBehavior<BuildingManager>.Instance;
             if (bm == null)
                 return null;
@@ -405,6 +447,7 @@ namespace AutoShopping
 
         private static VehicleSpawnerController FindNearestStoreVehicleSpawner(bool handTruckOnly)
         {
+            using var perf = ModPerf.Measure(handTruckOnly ? "cargo.find_handtruck" : "cargo.find_cart");
             var bm = InstanceBehavior<BuildingManager>.Instance;
             if (bm == null)
                 return null;
@@ -438,6 +481,7 @@ namespace AutoShopping
 
         internal static CashRegisterController FindNearestCashRegister()
         {
+            using var perf = ModPerf.Measure("cargo.find_register");
             var bm = InstanceBehavior<BuildingManager>.Instance;
             if (bm == null)
                 return null;

@@ -5,13 +5,16 @@ namespace AutoShopping
     internal static class AutoShoppingConfig
     {
         private const string AutoPickCartKey = "auto_pick_cart";
+        private const string PerfLogKey = "perf_log";
 
         internal const int MaxItemSlots = 8;
-        internal const float ToggleKeyPollInterval = 0.05f;
+        internal const float ToggleKeyPollInterval = 0.08f;
+        internal const float VisibilityPollInterval = 0.2f;
 
         internal static bool AutoOpenOnEnter { get; private set; } = true;
         internal static bool AutoPickCartEnabled { get; private set; }
         internal static bool LogVerbose { get; private set; }
+        internal static bool LogPerf { get; private set; } = true;
 
         private static ModContext _context;
 
@@ -21,6 +24,7 @@ namespace AutoShopping
             ModLog.Initialize(context);
             AutoOpenOnEnter = true;
             LogVerbose = false;
+            LogPerf = LoadBool(PerfLogKey, defaultValue: true);
             AutoPickCartEnabled = LoadBool(AutoPickCartKey, defaultValue: false);
             ModLog.Info("Auto pick cart = " + AutoPickCartEnabled);
         }

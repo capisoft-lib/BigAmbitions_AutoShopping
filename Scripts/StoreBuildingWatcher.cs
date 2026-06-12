@@ -54,40 +54,13 @@ namespace AutoShopping
             if (!GameState.IsWorldReady() || !BuildingManager.IsInsideBuilding)
                 return;
 
-            var bm = InstanceBehavior<BuildingManager>.Instance;
-            if (bm == null)
-                return;
-
-            var profile = StoreProfile.Detect(bm);
-            if (!profile.IsSupported)
-            {
-                ModLog.Info("Unsupported store at " + address + " type=" + profile.BusinessTypeName);
-                StoreSession.End();
-                AutoShoppingPanel.Hide();
-                return;
-            }
-
-            var products = StoreCatalogService.Scan(profile);
-            if (products.Count == 0)
-            {
-                ModLog.Warn("No purchasable products found in " + profile.BusinessDisplayName);
-                StoreSession.End();
-                return;
-            }
-
-            StoreSession.Begin(profile, products);
-            ModLog.Info("Catalog loaded: " + products.Count + " products");
-
-            if (AutoShoppingConfig.AutoPickCartEnabled)
-                AutoShoppingDriver.Instance?.ActionQueue?.RequestAutoPickOnEnter(StoreSession.Current);
-
-            if (AutoShoppingConfig.AutoOpenOnEnter)
-                AutoShoppingPanel.Show();
+            AutoShoppingDriver.Instance?.BeginStoreSession(address);
         }
 
         private static void OnExitBuilding(Address address)
         {
             ModLog.Info("Exit building: " + address);
+            StoreItemRouteService.Clear();
             AutoShoppingDriver.Instance?.ActionQueue?.Cancel();
             StoreSession.End();
             AutoShoppingPanel.Hide();

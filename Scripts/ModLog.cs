@@ -9,6 +9,7 @@ namespace AutoShopping
     {
         private const string Prefix = "[AutoShopping]";
         private const string LogFileName = "auto_shopping.log";
+        private const string PerfLogFileName = "auto_shopping_perf.log";
         private const string LogsFolderName = "Logs";
 
         private static string _logsDir;
@@ -32,8 +33,13 @@ namespace AutoShopping
 
         internal static void Shutdown() => _logsDir = null;
 
+        internal static void Boot(string message) => Debug.Log(Prefix + " " + message);
+
         internal static void Info(string message)
         {
+            if (!AutoShoppingConfig.LogVerbose)
+                return;
+
             Debug.Log(Prefix + " " + message);
             WriteFile("INFO", message);
         }
@@ -44,14 +50,48 @@ namespace AutoShopping
             WriteFile("WARN", message);
         }
 
+        internal static void PerfSlow(string operation, double milliseconds, string detail = null)
+        {
+            if (!AutoShoppingConfig.LogPerf)
+                return;
+
+            var message = "SLOW " + operation + " " + milliseconds.ToString("F1") + "ms";
+            if (!string.IsNullOrEmpty(detail))
+                message += " | " + detail;
+
+            Debug.LogWarning(Prefix + " [perf] " + message);
+            WritePerfFile("SLOW", message);
+        }
+
+        internal static void PerfSummary(string summary)
+        {
+            if (!AutoShoppingConfig.LogPerf || string.IsNullOrEmpty(summary))
+                return;
+
+            WritePerfFile("SUMMARY", summary.TrimEnd());
+        }
+
         private static void WriteFile(string level, string message)
+        {
+            if (!AutoShoppingConfig.LogVerbose || string.IsNullOrEmpty(_logsDir))
+                return;
+
+            WriteToFile(LogFileName, level, message);
+        }
+
+        private static void WritePerfFile(string level, string message)
         {
             if (string.IsNullOrEmpty(_logsDir))
                 return;
 
+            WriteToFile(PerfLogFileName, level, message);
+        }
+
+        private static void WriteToFile(string fileName, string level, string message)
+        {
             try
             {
-                var path = Path.Combine(_logsDir, LogFileName);
+                var path = Path.Combine(_logsDir, fileName);
                 File.AppendAllText(
                     path,
                     DateTime.UtcNow.ToString("o") + " [" + level + "] " + message + Environment.NewLine);

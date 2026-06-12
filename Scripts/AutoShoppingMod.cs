@@ -16,15 +16,18 @@ namespace AutoShopping
 
         public Task OnLoadAsync(ModContext context)
         {
-            ModLog.Info("AutoShopping city load | mod_id=" + context.ModId + " | version=0.11.10-vanilla-buttons");
             AutoShoppingConfig.Initialize(context);
+            ModLog.Boot("AutoShopping city load | mod_id=" + context.ModId + " | version=0.11.14-perf"
+                        + " | perf_log=" + AutoShoppingConfig.LogPerf);
+            BaGameUiChrome.EnsureInitialized();
             StoreBuildingWatcher.Subscribe();
 
             _driverObject = new GameObject("AutoShopping_Driver");
             UnityEngine.Object.DontDestroyOnLoad(_driverObject);
             _driverObject.AddComponent<AutoShoppingDriver>();
 
-            ModLog.Info("AutoShopping ready. " + ModUiText.ToggleHint);
+            ModLog.Boot("AutoShopping ready. " + ModUiText.ToggleHint
+                        + " | Perf logs: Logs/auto_shopping_perf.log (every 5s + SLOW >12ms)");
             return Task.CompletedTask;
         }
 
@@ -41,8 +44,9 @@ namespace AutoShopping
             }
 
             StoreSession.End();
+            ModPerf.FlushSummary();
             AutoShoppingConfig.Shutdown();
-            ModLog.Info("AutoShopping unloaded.");
+            ModLog.Boot("AutoShopping unloaded.");
             return Task.CompletedTask;
         }
     }

@@ -1,11 +1,8 @@
 using System.Collections;
-
 using System.Collections.Generic;
-
+using System.Diagnostics;
 using Controllers;
-
 using Helpers;
-
 using UnityEngine;
 
 using UnityEngine.Events;
@@ -65,6 +62,10 @@ namespace AutoShopping
         private MonoBehaviour _host;
 
         private bool _cancelRequested;
+
+        private bool _interruptRequested;
+
+        private ShoppingAction _executingAction;
 
 
 
@@ -168,13 +169,11 @@ namespace AutoShopping
 
                 return;
 
-
+            using var perf = ModPerf.Measure("queue.request_fulfillment");
 
             PruneObsoletePicksAndDrops(session);
 
             EnsureContainerAcquisition(session);
-
-
 
             foreach (var product in session.Products)
 
@@ -228,8 +227,10 @@ namespace AutoShopping
 
             ModLog.Info("Queue fulfillment: pending=" + _pending.Count);
 
-            TryStart();
-
+            if (_runner != null && IsExecutingActionObsolete(session))
+                StopActiveRunner(restart: true);
+            else
+                TryStart();
         }
 
 
@@ -377,21 +378,13 @@ namespace AutoShopping
 
             _pending.Clear();
 
-            var player = InstanceBehavior<GameManager>.Instance?.playerController;
+            StopActiveRunner(restart: false);
 
-            player?.RemoveGoal();
+            _cancelRequested = false;
 
+            AutoShoppingPanel.SetStatus(ModUiText.StatusIdle);
 
-
-            if (_runner != null && _host != null)
-
-            {
-
-                _host.StopCoroutine(_runner);
-
-                _runner = null;
-
-            }
+            AutoShoppingPanel.RefreshAfterQueueAction();
 
         }
 
@@ -447,15 +440,21 @@ namespace AutoShopping
 
                     _pending.RemoveAt(0);
 
+                    _executingAction = action;
+
                     ModLog.Info("Queue execute: " + action.Type +
 
                                 (string.IsNullOrEmpty(action.ItemName) ? string.Empty : " " + action.ItemName));
 
+                    var actionStart = Stopwatch.GetTimestamp();
                     yield return Execute(action);
+                    _executingAction = null;
+                    var actionMs = (Stopwatch.GetTimestamp() - actionStart) * 1000.0 / Stopwatch.Frequency;
+                    ModPerf.Record("queue.action." + action.Type, actionMs);
 
                     StoreSession.Current?.RefreshPicked();
 
-                    AutoShoppingPanel.RefreshAll();
+                    AutoShoppingPanel.RefreshAfterQueueAction();
 
                 }
 
@@ -467,7 +466,11 @@ namespace AutoShopping
 
                 _runner = null;
 
+                _executingAction = null;
+
                 _cancelRequested = false;
+
+                _interruptRequested = false;
 
             }
 
@@ -516,6 +519,61 @@ namespace AutoShopping
         }
 
 
+
+        private void StopActiveRunner(bool restart)
+        {
+            _interruptRequested = true;
+            InterruptPlayerMovement();
+
+            if (_runner != null && _host != null)
+            {
+                _host.StopCoroutine(_runner);
+                _runner = null;
+            }
+
+            _executingAction = null;
+            _interruptRequested = false;
+
+            if (restart)
+                TryStart();
+        }
+
+        private static void InterruptPlayerMovement()
+        {
+            var player = InstanceBehavior<GameManager>.Instance?.playerController;
+            player?.ResetNavigation();
+        }
+
+        private bool ShouldAbortMovement() => _cancelRequested || _interruptRequested;
+
+        private bool IsExecutingActionObsolete(StoreSession session)
+        {
+            if (_executingAction == null)
+                return false;
+
+            switch (_executingAction.Type)
+            {
+                case ShoppingActionType.AcquireBasket:
+                case ShoppingActionType.AcquireHandTruck:
+                case ShoppingActionType.AcquireShoppingCart:
+                    return !HasAnyDesiredItems(session);
+
+                case ShoppingActionType.PickItem:
+                {
+                    var product = session.FindProduct(_executingAction.ItemName);
+                    return product == null || product.PickedQuantity >= product.DesiredQuantity;
+                }
+
+                case ShoppingActionType.DropItem:
+                {
+                    var product = session.FindProduct(_executingAction.ItemName);
+                    return product == null || product.PickedQuantity <= product.DesiredQuantity;
+                }
+
+                default:
+                    return false;
+            }
+        }
 
         private void PruneObsoletePicksAndDrops(StoreSession session)
 
@@ -654,7 +712,7 @@ namespace AutoShopping
 
 
 
-        private static IEnumerator PickUntilFulfilled(string itemName)
+        private IEnumerator PickUntilFulfilled(string itemName)
 
         {
 
@@ -667,6 +725,11 @@ namespace AutoShopping
             while (stalls < 3)
 
             {
+                if (ShouldAbortMovement())
+                {
+                    InterruptPlayerMovement();
+                    yield break;
+                }
 
                 var product = StoreSession.Current?.FindProduct(itemName);
 
@@ -752,9 +815,14 @@ namespace AutoShopping
 
 
 
-        private static IEnumerator DropUntilFulfilled(string itemName)
+        private IEnumerator DropUntilFulfilled(string itemName)
 
         {
+            if (ShouldAbortMovement())
+            {
+                InterruptPlayerMovement();
+                yield break;
+            }
 
             var product = StoreSession.Current?.FindProduct(itemName);
 
@@ -806,7 +874,7 @@ namespace AutoShopping
 
 
 
-        private static IEnumerator WalkAndInteract(ItemController target)
+        private IEnumerator WalkAndInteract(ItemController target)
 
         {
 
@@ -828,7 +896,7 @@ namespace AutoShopping
 
 
 
-        private static IEnumerator WalkAndInteract(EntityController target)
+        private IEnumerator WalkAndInteract(EntityController target)
 
         {
 
@@ -858,11 +926,12 @@ namespace AutoShopping
 
             {
 
-                if (!GameState.IsInsideSupportedInterior())
+                if (!GameState.IsInsideSupportedInterior() || ShouldAbortMovement())
 
+                {
+                    InterruptPlayerMovement();
                     yield break;
-
-
+                }
 
                 yield return null;
 
@@ -874,13 +943,21 @@ namespace AutoShopping
 
             {
 
-                AutoShoppingPanel.SetStatus(ModUiText.ErrorUnreachable);
+                if (!ShouldAbortMovement())
+                    AutoShoppingPanel.SetStatus(ModUiText.ErrorUnreachable);
 
+                InterruptPlayerMovement();
                 yield break;
 
             }
 
 
+
+            if (ShouldAbortMovement())
+            {
+                InterruptPlayerMovement();
+                yield break;
+            }
 
             yield return null;
 

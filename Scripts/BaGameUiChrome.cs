@@ -1,4 +1,5 @@
 using System;
+using Helpers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,12 +20,16 @@ namespace AutoShopping
         /// <summary>Vanilla HUD reference width (same as VoogleRoute NavPanelLayout).</summary>
         internal const float RefPanelWidth = 370f;
         internal const float MinFallbackPanelWidth = 540f;
-        internal const float FooterHeight = 168f;
+        internal const float FooterStatusVerticalSavings = 36f;
+        internal const float PanelTopClearanceSavings = 24f;
+        internal const float FooterTopContentHeight = 110f;
+        internal const float FooterStatusZoneHeight = 26f;
+        internal const float FooterHeight = FooterTopContentHeight + FooterStatusZoneHeight;
         internal const float PrimaryButtonHeight = 46f;
         internal const float HeaderBlockHeight = 48f;
         internal const float ContentInset = 18f;
-        internal const float HudBodyTopPadding = 2f;
-        internal const float HudBodyBottomPadding = 4f;
+        internal const float HudBodyTopPadding = 5f;
+        internal const float HudBodyBottomPadding = 8f;
         internal const float HudButtonHeight = 40f;
         internal const float HudButtonTextPaddingX = 12f;
         internal const float HudButtonFontSize = 16f;
@@ -43,6 +48,8 @@ namespace AutoShopping
         internal const float FrameBleedHeight = 26f;
         internal const float FrameOffsetX = -2f;
         internal const float FrameOffsetY = -13f;
+        internal const float MainPanelHeaderTightenLeft = 3f;
+        internal const float MainPanelHeaderTightenRight = 5f;
         internal const float ScreenMarginX = 16f;
         internal const float ScreenMarginY = 36f;
         internal const float TopScreenMargin = 36f;
@@ -62,7 +69,10 @@ namespace AutoShopping
         internal static readonly Color ButtonBlueBottom = new Color(0.2f, 0.38f, 0.78f, 1f);
         internal static readonly Color ButtonGreenFallback = new Color(0.28f, 0.72f, 0.38f, 1f);
         internal static readonly Color ButtonRedFallback = new Color(0.82f, 0.22f, 0.22f, 1f);
-        internal const float HeaderCloseButtonSize = 34f;
+        internal const float HeaderCloseButtonSize = 30f;
+        internal const float HeaderCloseButtonOffsetX = -5f;
+        internal const float FooterStatusVerticalNudge = 6f;
+        internal const float HeaderCloseButtonOffsetY = 1f;
 
         private static Sprite _panelBg;
         private static Sprite _headerBg;
@@ -103,6 +113,7 @@ namespace AutoShopping
             if (_discovered)
                 return;
 
+            using var perf = ModPerf.Measure("chrome.discover_assets");
             _discovered = true;
             DiscoverAssets();
         }
@@ -122,6 +133,23 @@ namespace AutoShopping
             var group = root.AddComponent<CanvasGroup>();
             group.interactable = interactive;
             group.blocksRaycasts = interactive;
+        }
+
+        /// <summary>Match vanilla UI layer so GameManager.HasInputSelected blocks hotkeys while typing.</summary>
+        internal static void ApplyUiLayer(GameObject root)
+        {
+            if (root == null)
+                return;
+
+            SetLayerRecursive(root, LayerHelper.UiLayerIndex);
+        }
+
+        private static void SetLayerRecursive(GameObject go, int layer)
+        {
+            go.layer = layer;
+            var transform = go.transform;
+            for (var i = 0; i < transform.childCount; i++)
+                SetLayerRecursive(transform.GetChild(i).gameObject, layer);
         }
 
         /// <summary>Same chrome recipe as VoogleRoute RouteToggleHud / GameStylePanelChrome.</summary>
@@ -161,7 +189,7 @@ namespace AutoShopping
             if (useToggleHeader)
                 ApplyToggleHudHeaderFrame(header, panelWidth, scale);
             else
-                ApplyHeaderFrame(header, scale);
+                ApplyMainPanelHeaderFrame(header, panelWidth);
             var headerImage = header.gameObject.AddComponent<Image>();
             headerImage.raycastTarget = false;
             ApplyHeaderBg(headerImage);
@@ -203,13 +231,22 @@ namespace AutoShopping
             RectTransform buttonRoot,
             float scale,
             VanillaButtonStyle style,
-            bool bleedBottom = true)
+            bool bleedBottom = true,
+            Action<Image> applyStyle = null)
         {
+            void Apply(Image img)
+            {
+                if (applyStyle != null)
+                    applyStyle(img);
+                else
+                    ApplyVanillaButtonStyle(img, style);
+            }
+
             if (!bleedBottom)
             {
                 var flat = buttonRoot.gameObject.AddComponent<Image>();
                 flat.raycastTarget = true;
-                ApplyVanillaButtonStyle(flat, style);
+                Apply(flat);
                 return flat;
             }
 
@@ -219,7 +256,7 @@ namespace AutoShopping
             StretchButtonGraphic(rt, scale);
             var img = graphicGo.AddComponent<Image>();
             img.raycastTarget = true;
-            ApplyVanillaButtonStyle(img, style);
+            Apply(img);
             return img;
         }
 
@@ -232,7 +269,8 @@ namespace AutoShopping
             UnityAction onClick,
             VanillaButtonStyle style = VanillaButtonStyle.Blue,
             float fontSize = 0f,
-            bool bleedBottom = true)
+            bool bleedBottom = true,
+            Action<Image> applyStyle = null)
         {
             if (fontSize <= 0f)
                 fontSize = HudButtonFontSize;
@@ -240,7 +278,7 @@ namespace AutoShopping
             var rect = CreateRect(parent, "Button");
             rect.sizeDelta = new Vector2(width, height);
 
-            var image = CreateButtonGraphic(rect, scale, style, bleedBottom);
+            var image = CreateButtonGraphic(rect, scale, style, bleedBottom, applyStyle);
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             ApplyVanillaButtonColors(button);
@@ -323,14 +361,15 @@ namespace AutoShopping
             anchoredPositionX = trimOffset;
         }
 
-        /// <summary>Header horizontal edges aligned to the panel body frame bleed (works at any panel width).</summary>
+        /// <summary>
+        /// Header edges aligned to the visible frame. Bleed uses ref-pixel constants (not panel-width scale)
+        /// so a 2×-wide panel does not over-stretch the title bar past the body frame.
+        /// </summary>
         internal static void ApplyMainPanelHeaderFrame(RectTransform header, float panelWidth)
         {
-            var scale = panelWidth / RefPanelWidth;
-            var bleedW = FrameBleedWidth * scale;
-            var offX = FrameOffsetX * scale;
-            var leftExtend = bleedW * 0.5f - offX;
-            var rightExtend = bleedW * 0.5f + offX;
+            _ = panelWidth;
+            var leftExtend = FrameBleedWidth * 0.5f - FrameOffsetX - MainPanelHeaderTightenLeft;
+            var rightExtend = FrameBleedWidth * 0.5f + FrameOffsetX - MainPanelHeaderTightenRight;
 
             header.anchorMin = new Vector2(0f, 1f);
             header.anchorMax = new Vector2(1f, 1f);
@@ -365,7 +404,7 @@ namespace AutoShopping
             if (closeButton == null)
                 return;
 
-            closeButton.anchoredPosition = new Vector2(-10f * scale, 0f);
+            closeButton.anchoredPosition = new Vector2(HeaderCloseButtonOffsetX * scale, HeaderCloseButtonOffsetY);
             closeButton.sizeDelta = new Vector2(HeaderCloseButtonSize, HeaderCloseButtonSize);
         }
 
@@ -399,7 +438,7 @@ namespace AutoShopping
             rect.anchorMin = new Vector2(1f, 0.5f);
             rect.anchorMax = new Vector2(1f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = new Vector2(-10f, 0f);
+            rect.anchoredPosition = new Vector2(HeaderCloseButtonOffsetX, HeaderCloseButtonOffsetY);
             rect.sizeDelta = new Vector2(HeaderCloseButtonSize, HeaderCloseButtonSize);
 
             var image = CreateButtonGraphic(rect, 1f, VanillaButtonStyle.Red, bleedBottom: false);
@@ -513,10 +552,10 @@ namespace AutoShopping
 
         internal static void ApplyTitleStyle(TextMeshProUGUI text, float scale = 1f)
         {
-            text.fontSize = 18f * scale;
+            text.fontSize = 18f * Mathf.Clamp(scale, 0.85f, 1.15f);
             text.fontStyle = FontStyles.Bold;
             text.color = TitleColor;
-            text.alignment = TextAlignmentOptions.Center;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
             text.raycastTarget = false;
             ApplyTitleFont(text);
         }
@@ -658,11 +697,6 @@ namespace AutoShopping
             if (sprite.name == "Gradient-Gray-Border-Round" && _btnGrey == null)
                 _btnGrey = sprite;
             if (sprite.name == "Gradient-Red-Round" && _btnRed == null)
-                _btnRed = sprite;
-            if (_btnRed == null
-                && sprite.name.IndexOf("red", StringComparison.OrdinalIgnoreCase) >= 0
-                && (sprite.name.IndexOf("gradient", StringComparison.OrdinalIgnoreCase) >= 0
-                    || sprite.name.IndexOf("round", StringComparison.OrdinalIgnoreCase) >= 0))
                 _btnRed = sprite;
         }
     }

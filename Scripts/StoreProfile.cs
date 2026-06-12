@@ -76,6 +76,7 @@ namespace AutoShopping
         /// <summary>Default container: basket in retail, biggest vehicle in wholesale.</summary>
         internal ShoppingContainerTarget GetDefaultContainerTarget()
         {
+            using var perf = ModPerf.Measure("profile.default_container");
             var basket = OffersShoppingBasket() && ShoppingCargoHelper.HasBasketProviderInStore()
                 ? ShoppingCargoHelper.GetBasketCapacity()
                 : 0;
