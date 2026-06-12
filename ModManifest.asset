@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6478893ab1f4e5c6d7e80, type: 3}
+  m_Name: ModManifest
+  m_EditorClassIdentifier: 
+  ModId: AutoShopping
+  DisplayName: Auto Shopping
+  Author: capisoft-lib
+  Version: 0.11.2
+  AssetBundleName: 
+  ModAssembly: {fileID: 5897886265953266890, guid: a7b8c9d0e1f243a5b6c7d8e9f0a1b2c3, type: 3}
+  LocalesFolder: {fileID: 102900000, guid: b8c9d0e1f2a34b5c6d7e8f9a0b1c2d3, type: 3}
+  DependenciesFolder: {fileID: 0}
+  EnumsFile: {fileID: 0}
+  TargetPlatforms: 1
