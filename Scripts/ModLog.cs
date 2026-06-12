@@ -19,25 +19,36 @@ namespace AutoShopping
             if (context == null || string.IsNullOrEmpty(context.ModRootPath))
                 return;
 
+            if (!AutoShoppingConfig.LogEnabled && !AutoShoppingConfig.LogPerf)
+                return;
+
             _logsDir = Path.Combine(context.ModRootPath, LogsFolderName);
             try
             {
                 Directory.CreateDirectory(_logsDir);
-                Info("Log file: " + Path.Combine(LogsFolderName, LogFileName));
+                if (AutoShoppingConfig.LogEnabled && AutoShoppingConfig.LogVerbose)
+                    Info("Log file: " + Path.Combine(LogsFolderName, LogFileName));
             }
             catch (Exception ex)
             {
-                Debug.LogWarning(Prefix + " Failed to create Logs folder: " + ex.Message);
+                if (AutoShoppingConfig.LogEnabled)
+                    Debug.LogWarning(Prefix + " Failed to create Logs folder: " + ex.Message);
             }
         }
 
         internal static void Shutdown() => _logsDir = null;
 
-        internal static void Boot(string message) => Debug.Log(Prefix + " " + message);
+        internal static void Boot(string message)
+        {
+            if (!AutoShoppingConfig.LogEnabled)
+                return;
+
+            Debug.Log(Prefix + " " + message);
+        }
 
         internal static void Info(string message)
         {
-            if (!AutoShoppingConfig.LogVerbose)
+            if (!AutoShoppingConfig.LogEnabled || !AutoShoppingConfig.LogVerbose)
                 return;
 
             Debug.Log(Prefix + " " + message);
@@ -46,6 +57,9 @@ namespace AutoShopping
 
         internal static void Warn(string message)
         {
+            if (!AutoShoppingConfig.LogEnabled)
+                return;
+
             Debug.LogWarning(Prefix + " " + message);
             WriteFile("WARN", message);
         }
@@ -59,7 +73,9 @@ namespace AutoShopping
             if (!string.IsNullOrEmpty(detail))
                 message += " | " + detail;
 
-            Debug.LogWarning(Prefix + " [perf] " + message);
+            if (AutoShoppingConfig.LogEnabled)
+                Debug.LogWarning(Prefix + " [perf] " + message);
+
             WritePerfFile("SLOW", message);
         }
 
@@ -73,7 +89,7 @@ namespace AutoShopping
 
         private static void WriteFile(string level, string message)
         {
-            if (!AutoShoppingConfig.LogVerbose || string.IsNullOrEmpty(_logsDir))
+            if (!AutoShoppingConfig.LogEnabled || !AutoShoppingConfig.LogVerbose || string.IsNullOrEmpty(_logsDir))
                 return;
 
             WriteToFile(LogFileName, level, message);

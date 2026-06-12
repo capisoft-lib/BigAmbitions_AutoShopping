@@ -36,8 +36,10 @@ namespace AutoShopping
         internal static string BtnPickCart => Loc("autoshopping_btn_pick_cart", "Pick container");
         internal static string BtnPickBasket => Loc("autoshopping_btn_pick_basket", "Pick basket");
         internal static string BtnDropCart => Loc("autoshopping_btn_drop_cart", "Put down");
-        internal static string BtnHide => Loc("autoshopping_btn_hide", "Hide");
-        internal static string BtnShow => Loc("autoshopping_btn_show", "Show");
+        private const string ToggleHotkeySuffix = " [F8]";
+
+        internal static string BtnHide => Loc("autoshopping_btn_hide", "Hide") + ToggleHotkeySuffix;
+        internal static string BtnShow => Loc("autoshopping_btn_show", "Show") + ToggleHotkeySuffix;
         internal static string StatusCartAlreadyHeld => Loc("autoshopping_status_cart_already_held", "Already holding a container.");
         internal static string ErrorNoCartToDrop => Loc("autoshopping_error_no_cart_to_drop", "No container to put down.");
         internal static string StatusDroppingContainer => Loc("autoshopping_status_dropping_container", "Putting container down…");

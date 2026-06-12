@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Buildings;
 using Helpers;
+using UI.MiniMenu;
 using UnityEngine;
 
 namespace AutoShopping
@@ -11,7 +12,6 @@ namespace AutoShopping
         internal static AutoShoppingDriver Instance { get; private set; }
 
         private readonly ShoppingActionQueue _queue = new ShoppingActionQueue();
-        private float _nextTogglePoll;
         private float _nextVisibilityPoll;
         private float _nextBalanceRefresh;
         private Action<string> _onGameEvent;
@@ -29,10 +29,13 @@ namespace AutoShopping
             GameEvent.onGameEventTriggered = (Action<string>)Delegate.Combine(
                 GameEvent.onGameEventTriggered,
                 _onGameEvent);
+            MiniMenu.OnToggled += OnPauseMenuToggled;
         }
 
         private void OnDestroy()
         {
+            MiniMenu.OnToggled -= OnPauseMenuToggled;
+
             if (_onGameEvent != null)
             {
                 GameEvent.onGameEventTriggered = (Action<string>)Delegate.Remove(
@@ -45,6 +48,16 @@ namespace AutoShopping
                 Instance = null;
         }
 
+        private static void OnPauseMenuToggled(bool isOpen)
+        {
+            GameState.InvalidateUiBlockingCache();
+            if (isOpen)
+                Instance?.ActionQueue?.Cancel();
+
+            AutoShoppingToggleHud.UpdateVisibility();
+            AutoShoppingPanel.UpdateVisibility();
+        }
+
         private void Update()
         {
             using (ModPerf.Measure("driver.update"))
@@ -55,8 +68,11 @@ namespace AutoShopping
                 StoreItemRouteService.Tick();
             }
 
-            ModPerf.NotifyDriverUpdate();
-            ModPerf.Tick();
+            if (AutoShoppingConfig.LogPerf)
+            {
+                ModPerf.NotifyDriverUpdate();
+                ModPerf.Tick();
+            }
         }
 
         internal void BeginStoreSession(Address address)
@@ -101,11 +117,24 @@ namespace AutoShopping
             StoreSession.Begin(profile, products);
             ModLog.Info("Catalog loaded: " + products.Count + " products");
 
+            while (bm.enteringBuilding && BuildingManager.IsInsideBuilding)
+                yield return null;
+
+            var session = StoreSession.Current;
+            if (session != null)
+            {
+                session.SyncContainerFromPlayer();
+                session.RefreshPicked();
+                session.SyncDesiredFromPicked();
+            }
+
             if (AutoShoppingConfig.AutoPickCartEnabled)
                 _queue.RequestAutoPickOnEnter(StoreSession.Current);
 
             if (AutoShoppingConfig.AutoOpenOnEnter)
                 AutoShoppingPanel.Show();
+
+            AutoShoppingToggleHud.UpdateVisibility();
         }
 
         private void PollVisibility()
@@ -116,11 +145,28 @@ namespace AutoShopping
 
             _nextVisibilityPoll = now + AutoShoppingConfig.VisibilityPollInterval;
 
-            if (!BuildingManager.IsInsideBuilding)
-                return;
-
             using (ModPerf.Measure("poll.visibility"))
             {
+                if (IsExitingBuilding())
+                {
+                    _queue.Cancel();
+                    AutoShoppingPanel.SuppressRestore();
+                    AutoShoppingPanel.Hide();
+                    AutoShoppingToggleHud.UpdateVisibility();
+                    return;
+                }
+
+                if (!BuildingManager.IsInsideBuilding)
+                {
+                    if (!GameState.IsPedestrianInSupportedStore())
+                    {
+                        AutoShoppingPanel.UpdateVisibility();
+                        AutoShoppingToggleHud.UpdateVisibility();
+                    }
+
+                    return;
+                }
+
                 AutoShoppingToggleHud.UpdateVisibility();
                 AutoShoppingPanel.UpdateVisibility();
 
@@ -129,6 +175,19 @@ namespace AutoShopping
                     _nextBalanceRefresh = now + 0.75f;
                     AutoShoppingPanel.RefreshFooterOnly();
                 }
+            }
+        }
+
+        private static bool IsExitingBuilding()
+        {
+            try
+            {
+                var bm = InstanceBehavior<BuildingManager>.Instance;
+                return bm != null && bm.exitingBuilding;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -142,16 +201,11 @@ namespace AutoShopping
 
         private void PollToggleKeyCore()
         {
-            if (!GameState.IsWorldReady() || GameState.IsUiBlocking())
-                return;
-
-            var now = Time.unscaledTime;
-            if (now < _nextTogglePoll)
-                return;
-
-            _nextTogglePoll = now + AutoShoppingConfig.ToggleKeyPollInterval;
-
+            // GetKeyDown is true for one frame only — must check every Update, not on a timer.
             if (!Input.GetKeyDown(KeyCode.F8))
+                return;
+
+            if (!GameState.IsWorldReady())
                 return;
 
             if (AutoShoppingPanel.IsSearchFocused)
@@ -167,6 +221,8 @@ namespace AutoShopping
         {
             if (gameEvent != "ba:gameevent_itemcargochanged")
                 return;
+
+            StoreSession.Current?.SyncContainerFromPlayer();
 
             if (!AutoShoppingPanel.IsVisible)
                 return;

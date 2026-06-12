@@ -13,7 +13,7 @@ namespace AutoShopping
         private const float StatusFontSize = 15f;
         private const float RowHeight = 50f;
         private const float IconColumnWidth = 48f;
-        private const float WayToColumnWidth = 62f;
+        private const float WayToColumnWidth = 74f;
         private const float PriceColumnWidth = 84f;
         private const float QtyColumnWidth = 118f;
         private const float RightColumnsWidth = WayToColumnWidth + PriceColumnWidth + QtyColumnWidth + 4f;
@@ -568,9 +568,11 @@ namespace AutoShopping
         /// <summary>Closes the panel for checkout and prevents auto-restore when PurchaseUI closes.</summary>
         internal static void CloseForCheckout()
         {
-            _restoreAfterUnblock = false;
+            SuppressRestore();
             Hide();
         }
+
+        internal static void SuppressRestore() => _restoreAfterUnblock = false;
 
         /// <summary>Hides while vanilla menus (ESC, phone, map, etc.) are open; restores if it was open before.</summary>
         internal static void UpdateVisibility()
@@ -584,8 +586,12 @@ namespace AutoShopping
                 if (IsVisible)
                 {
                     // Checkout is temporary; keep the panel closed after payment completes.
-                    if (!GameState.IsCheckoutUiBlocking())
+                    if (!GameState.IsCheckoutUiBlocking() && GameState.IsPedestrianInSupportedStore())
+                    {
                         _restoreAfterUnblock = true;
+                        if (GameState.IsUiBlocking())
+                            AutoShoppingDriver.Instance?.ActionQueue?.Cancel();
+                    }
 
                     Hide();
                 }
@@ -648,6 +654,7 @@ namespace AutoShopping
                 return;
             }
 
+            session.SyncContainerFromPlayer();
             session.RefreshPicked();
 
             if (_titleLabel != null)
@@ -994,6 +1001,7 @@ namespace AutoShopping
                 VanillaButtonStyle.Blue,
                 fontSize: 11f,
                 bleedBottom: false);
+            ConfigureSingleLineButtonLabel(btnWayTo);
             StretchRect(btnWayTo.GetComponent<RectTransform>());
 
             var priceGo = new GameObject("Price", typeof(RectTransform));
@@ -1047,10 +1055,10 @@ namespace AutoShopping
             plusRect.pivot = new Vector2(1f, 0.5f);
             plusRect.anchoredPosition = Vector2.zero;
 
-            var captured = product;
-            btnWayTo.onClick.AddListener(() => OnWayTo(captured));
-            btnMinus.onClick.AddListener(() => OnDecrease(captured, session));
-            btnPlus.onClick.AddListener(() => OnIncrease(captured, session));
+            var capturedItemName = product.ItemName;
+            btnWayTo.onClick.AddListener(() => OnWayTo(capturedItemName));
+            btnMinus.onClick.AddListener(() => OnDecrease(capturedItemName));
+            btnPlus.onClick.AddListener(() => OnIncrease(capturedItemName));
 
             return new ProductRowUi
             {
@@ -1074,9 +1082,24 @@ namespace AutoShopping
             rect.offsetMax = Vector2.zero;
         }
 
-        private static void OnWayTo(CatalogProduct product)
+        private static void ConfigureSingleLineButtonLabel(Button button, float horizontalPadding = 3f)
+        {
+            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label == null)
+                return;
+
+            label.enableWordWrapping = false;
+            label.overflowMode = TextOverflowModes.Overflow;
+            var labelRect = label.rectTransform;
+            labelRect.offsetMin = new Vector2(horizontalPadding, 0f);
+            labelRect.offsetMax = new Vector2(-horizontalPadding, 0f);
+        }
+
+        private static void OnWayTo(string itemName)
         {
             ReleaseUiFocus();
+            var session = StoreSession.Current;
+            var product = session?.FindProduct(itemName);
             if (product == null)
                 return;
 
@@ -1089,20 +1112,22 @@ namespace AutoShopping
             SetStatus(ModUiText.FormatStatusWayTo(product.DisplayName));
         }
 
-        private static void OnIncrease(CatalogProduct product, StoreSession session)
+        private static void OnIncrease(string itemName)
         {
             ReleaseUiFocus();
+            var session = StoreSession.Current;
+            var product = session?.FindProduct(itemName);
+            if (session == null || product == null)
+                return;
+
             if (!product.InStock)
                 return;
 
-            var maxSlots = session.GetMaxSlots();
-            var totalDesired = 0;
-            foreach (var entry in session.Products)
-                totalDesired += entry.DesiredQuantity;
-
-            if (totalDesired >= maxSlots)
+            if (!session.CanIncreaseDesired())
             {
-                SetStatus(ModUiText.FormatErrorFull(maxSlots));
+                SetStatus(ModUiText.FormatErrorFull(session.GetMaxSlots()));
+                ModLog.Info("Increase blocked: " + product.ItemName +
+                            " slots=" + session.GetCurrentSlots() + "/" + session.GetMaxSlots());
                 return;
             }
 
@@ -1112,9 +1137,14 @@ namespace AutoShopping
             RefreshAll();
         }
 
-        private static void OnDecrease(CatalogProduct product, StoreSession session)
+        private static void OnDecrease(string itemName)
         {
             ReleaseUiFocus();
+            var session = StoreSession.Current;
+            var product = session?.FindProduct(itemName);
+            if (session == null || product == null)
+                return;
+
             if (product.DesiredQuantity <= 0)
                 return;
 

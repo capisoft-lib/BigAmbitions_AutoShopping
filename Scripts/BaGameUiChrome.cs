@@ -42,6 +42,10 @@ namespace AutoShopping
         internal const float HeaderLeftExtend = 2f;
         internal const float BodyVisibleLeft = 26f;
         internal const float BodyVisibleRight = 373f;
+        internal const float HeaderSliceBorderLeft = BodyVisibleLeft - 3f;
+        internal const float HeaderSliceBorderRight = 10f;
+        internal const float ToggleHudHeaderLeftAdjust = -9f;
+        internal const float ToggleHudHeaderRightAdjust = 1f;
         internal static float FullWidthHeaderTrim => -(HeaderTrimWidthBase - HeaderLeftExtend);
         internal const float FrameBleedWidth = 24f;
         internal const float FramePixelsPerUnit = 2.45f;
@@ -50,6 +54,9 @@ namespace AutoShopping
         internal const float FrameOffsetY = -13f;
         internal const float MainPanelHeaderTightenLeft = 3f;
         internal const float MainPanelHeaderTightenRight = 5f;
+        internal const float ToggleHudButtonHeight = 32f;
+        internal const float ToggleHudButtonMarginX = 26f;
+        internal const float ToggleHudButtonLift = 6f;
         internal const float ScreenMarginX = 16f;
         internal const float ScreenMarginY = 36f;
         internal const float TopScreenMargin = 36f;
@@ -187,7 +194,7 @@ namespace AutoShopping
 
             header = CreateRect(panel, "Header");
             if (useToggleHeader)
-                ApplyToggleHudHeaderFrame(header, panelWidth, scale);
+                ApplyToggleHudHeaderFrame(header, panelWidth);
             else
                 ApplyMainPanelHeaderFrame(header, panelWidth);
             var headerImage = header.gameObject.AddComponent<Image>();
@@ -206,15 +213,22 @@ namespace AutoShopping
             rect.offsetMax = new Vector2(-padX, -padY);
         }
 
-        internal static void ApplyToggleHudHeaderFrame(RectTransform header, float panelWidth, float scale)
+        /// <summary>
+        /// Toggle HUD header — inset to visible frame borders (narrower than panel bleed rect).
+        /// </summary>
+        internal static void ApplyToggleHudHeaderFrame(RectTransform header, float panelWidth)
         {
+            var scale = Mathf.Max(0.01f, panelWidth / RefPanelWidth);
+            var leftInset = HeaderSliceBorderLeft * scale + ToggleHudHeaderLeftAdjust;
+            var rightInset = HeaderSliceBorderRight * scale + ToggleHudHeaderRightAdjust;
+
             header.anchorMin = new Vector2(0f, 1f);
             header.anchorMax = new Vector2(1f, 1f);
             header.pivot = new Vector2(0.5f, 1f);
-
-            ComputeHeaderRectHudTrim(panelWidth, scale, 0f, out var sizeDeltaX, out var posX);
-            header.anchoredPosition = new Vector2(posX, 0f);
-            header.sizeDelta = new Vector2(sizeDeltaX, HeaderBlockHeight);
+            header.anchoredPosition = Vector2.zero;
+            header.sizeDelta = Vector2.zero;
+            header.offsetMin = new Vector2(leftInset, -HeaderBlockHeight);
+            header.offsetMax = new Vector2(-rightInset, 0f);
         }
 
         internal static void StretchButtonGraphic(RectTransform rect, float scale)
@@ -336,7 +350,7 @@ namespace AutoShopping
             if (background != null)
                 ApplyBodyFrame(background, scale);
 
-            ApplyToggleHudHeaderFrame(header, panelWidth, scale);
+            ApplyToggleHudHeaderFrame(header, panelWidth);
         }
 
         /// <summary>Same trim recipe as VoogleRoute NavPanelLayout.ComputeHeaderRectHudTrim.</summary>

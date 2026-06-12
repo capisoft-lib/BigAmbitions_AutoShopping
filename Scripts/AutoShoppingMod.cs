@@ -17,8 +17,6 @@ namespace AutoShopping
         public Task OnLoadAsync(ModContext context)
         {
             AutoShoppingConfig.Initialize(context);
-            ModLog.Boot("AutoShopping city load | mod_id=" + context.ModId + " | version=0.11.14-perf"
-                        + " | perf_log=" + AutoShoppingConfig.LogPerf);
             BaGameUiChrome.EnsureInitialized();
             StoreBuildingWatcher.Subscribe();
 
@@ -26,8 +24,6 @@ namespace AutoShopping
             UnityEngine.Object.DontDestroyOnLoad(_driverObject);
             _driverObject.AddComponent<AutoShoppingDriver>();
 
-            ModLog.Boot("AutoShopping ready. " + ModUiText.ToggleHint
-                        + " | Perf logs: Logs/auto_shopping_perf.log (every 5s + SLOW >12ms)");
             return Task.CompletedTask;
         }
 
@@ -44,9 +40,10 @@ namespace AutoShopping
             }
 
             StoreSession.End();
-            ModPerf.FlushSummary();
+            if (AutoShoppingConfig.LogPerf)
+                ModPerf.FlushSummary();
+
             AutoShoppingConfig.Shutdown();
-            ModLog.Boot("AutoShopping unloaded.");
             return Task.CompletedTask;
         }
     }

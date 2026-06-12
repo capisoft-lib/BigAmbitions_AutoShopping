@@ -13,9 +13,7 @@ namespace AutoShopping
 
         internal static void Begin(StoreProfile profile, List<CatalogProduct> products)
         {
-            var selectedTarget = ShoppingContainerTarget.BareHands;
-            if (AutoShoppingConfig.AutoPickCartEnabled && profile != null)
-                selectedTarget = profile.GetDefaultContainerTarget();
+            var selectedTarget = ResolveInitialContainerTarget(profile);
 
             Current = new StoreSession
             {
@@ -27,9 +25,39 @@ namespace AutoShopping
             if (products != null)
                 Current.Products.AddRange(products);
 
+            Current.SyncContainerFromPlayer();
             StoreCatalogService.SyncPickedQuantities(Current.Products);
+            Current.SyncDesiredFromPicked();
             ModLog.Info("Store session started: " + (profile?.BusinessDisplayName ?? "?") +
-                        " | products=" + Current.Products.Count);
+                        " | products=" + Current.Products.Count +
+                        " | container=" + Current.SelectedTarget +
+                        " | slots=" + Current.GetCurrentSlots() + "/" + Current.GetMaxSlots());
+        }
+
+        private static ShoppingContainerTarget ResolveInitialContainerTarget(StoreProfile profile)
+        {
+            var activeTarget = ShoppingCargoHelper.DetectActiveTarget();
+            if (activeTarget != ShoppingContainerTarget.BareHands)
+                return activeTarget;
+
+            if (AutoShoppingConfig.AutoPickCartEnabled && profile != null)
+                return profile.GetDefaultContainerTarget();
+
+            return ShoppingContainerTarget.BareHands;
+        }
+
+        /// <summary>Keep session container/capacity in sync with what the player is already holding.</summary>
+        internal void SyncContainerFromPlayer()
+        {
+            var activeTarget = ShoppingCargoHelper.DetectActiveTarget();
+            if (activeTarget == ShoppingContainerTarget.BareHands)
+                return;
+
+            if (SelectedTarget == activeTarget)
+                return;
+
+            ModLog.Info("Synced active container: " + SelectedTarget + " -> " + activeTarget);
+            SelectedTarget = activeTarget;
         }
 
         internal static void End()
@@ -43,6 +71,24 @@ namespace AutoShopping
         internal void RefreshPicked()
         {
             StoreCatalogService.SyncPickedQuantities(Products);
+        }
+
+        /// <summary>Mirror picked counts so +/- starts from what is already in the container.</summary>
+        internal void SyncDesiredFromPicked()
+        {
+            foreach (var product in Products)
+                product.DesiredQuantity = product.PickedQuantity;
+        }
+
+        internal bool CanIncreaseDesired()
+        {
+            SyncContainerFromPlayer();
+            var maxSlots = GetMaxSlots();
+            var totalDesired = 0;
+            foreach (var product in Products)
+                totalDesired += product.DesiredQuantity;
+
+            return totalDesired < maxSlots;
         }
 
         internal CatalogProduct FindProduct(string itemName)
@@ -66,7 +112,26 @@ namespace AutoShopping
             if (activeCapacity > 0)
                 return activeCapacity;
 
-            return ShoppingCargoHelper.GetCapacityForTarget(SelectedTarget);
+            var activeTarget = ShoppingCargoHelper.DetectActiveTarget();
+            if (activeTarget != ShoppingContainerTarget.BareHands)
+            {
+                var activeTargetCapacity = ShoppingCargoHelper.GetCapacityForTarget(activeTarget);
+                if (activeTargetCapacity > 0)
+                    return activeTargetCapacity;
+            }
+
+            var selectedCapacity = ShoppingCargoHelper.GetCapacityForTarget(SelectedTarget);
+            if (selectedCapacity > 0)
+                return selectedCapacity;
+
+            if (Profile != null)
+            {
+                var storeCapacity = ShoppingCargoHelper.GetBestStoreContainerCapacity(Profile);
+                if (storeCapacity > 0)
+                    return storeCapacity;
+            }
+
+            return 1;
         }
 
         internal int GetCurrentSlots()

@@ -9,7 +9,7 @@ namespace AutoShopping
 {
     /// <summary>
     /// Lightweight aggregated profiler — writes summaries to Logs/auto_shopping_perf.log.
-    /// Enabled by default; disable via PlayerPrefs key perf_log = 0.
+    /// Disabled by default; enable via PlayerPrefs key mod_&lt;modId&gt;_perf_log = 1.
     /// </summary>
     internal static class ModPerf
     {

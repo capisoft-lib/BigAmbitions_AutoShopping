@@ -14,14 +14,19 @@ namespace AutoShopping
             80f + BaGameUiChrome.FooterStatusVerticalSavings + BaGameUiChrome.PanelTopClearanceSavings;
         internal const float ToggleHudTopOffset = 180f;
         internal const float RightScreenMargin = 16f;
+        internal const float ToggleHudWidthScale = 0.7f;
+        internal const float MainPanelLeftMargin = BaGameUiChrome.ScreenMarginX + 3f;
+        internal const float ToggleHudRightMargin = RightScreenMargin - 15f;
 
         internal static float GetPanelWidth() => PanelWidth;
+
+        internal static float GetToggleHudWidth() => PanelWidth * ToggleHudWidthScale;
 
         internal static float GetMainPanelWidth() => MainPanelWidth;
 
         internal static Vector2 GetToggleHudPosition(float panelWidth, float panelHeight)
         {
-            var x = Screen.width - RightScreenMargin - panelWidth;
+            var x = Screen.width - ToggleHudRightMargin - panelWidth;
             var y = Screen.height - ToggleHudTopOffset - panelHeight;
             y = Mathf.Clamp(
                 y,
@@ -36,7 +41,7 @@ namespace AutoShopping
             var bottom = BaGameUiChrome.ScreenMarginY
                          + BaGameUiChrome.FallbackCartHeight
                          + BaGameUiChrome.PanelGapAboveCart;
-            return new Vector2(BaGameUiChrome.ScreenMarginX, bottom);
+            return new Vector2(MainPanelLeftMargin, bottom);
         }
     }
 }

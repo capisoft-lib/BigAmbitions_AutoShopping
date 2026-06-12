@@ -1,4 +1,4 @@
-# Auto Shopping (v0.11.0)
+# Auto Shopping (v0.12.0)
 
 In-store shopping assistant for Big Ambitions. When you enter a supported store, the mod scans purchasable items and shows a catalog with icons, prices, and quantity controls.
 
@@ -13,7 +13,7 @@ Not supported: restaurants, hairdressers, nightclubs, casinos (cashier-only flow
 ## Controls
 
 - **F8** — toggle the Auto Shopping panel while inside a supported store
-- Panel opens automatically on entry (can be changed in code via `AutoShoppingConfig.AutoOpenOnEnter`)
+- Panel opens automatically on entry (toggle in mod options)
 
 ## Build & install
 

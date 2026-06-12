@@ -198,11 +198,11 @@ namespace AutoShopping
             switch (target)
             {
                 case ShoppingContainerTarget.ShoppingBasket:
-                    return GetBasketCapacity();
+                    return Mathf.Max(1, GetBasketCapacity());
                 case ShoppingContainerTarget.ShoppingCart:
-                    return GetBestShoppingCartCapacityInStore();
+                    return Mathf.Max(1, GetBestShoppingCartCapacityInStore());
                 case ShoppingContainerTarget.HandTruck:
-                    return GetHandTruckCapacity();
+                    return Mathf.Max(1, GetHandTruckCapacity());
                 default:
                     return 1;
             }

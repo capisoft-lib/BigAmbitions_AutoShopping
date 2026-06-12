@@ -63,7 +63,9 @@ namespace AutoShopping
             StoreItemRouteService.Clear();
             AutoShoppingDriver.Instance?.ActionQueue?.Cancel();
             StoreSession.End();
+            AutoShoppingPanel.SuppressRestore();
             AutoShoppingPanel.Hide();
+            AutoShoppingToggleHud.UpdateVisibility();
         }
     }
 }

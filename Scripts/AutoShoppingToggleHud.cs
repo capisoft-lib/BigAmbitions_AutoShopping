@@ -7,7 +7,7 @@ namespace AutoShopping
     /// <summary>Top-right lateral HUD — visual parity with VoogleRoute RouteToggleHud.</summary>
     internal static class AutoShoppingToggleHud
     {
-        private const string RootName = "AutoShopping_ToggleHud_v0127";
+        private const string RootName = "AutoShopping_ToggleHud_v0135";
 
         private static GameObject _root;
         private static RectTransform _panelRect;
@@ -111,27 +111,36 @@ namespace AutoShopping
             if (_panelRect == null)
                 return;
 
-            var panelWidth = BuildingHudLayout.GetPanelWidth();
-            _panelRect.sizeDelta = new Vector2(panelWidth, _metrics.PanelHeight);
-            _panelRect.anchoredPosition = BuildingHudLayout.GetToggleHudPosition(panelWidth, _metrics.PanelHeight);
+            var panelWidth = BuildingHudLayout.GetToggleHudWidth();
+            var scale = panelWidth / BaGameUiChrome.RefPanelWidth;
+            var buttonWidth = panelWidth - BaGameUiChrome.ToggleHudButtonMarginX * 2f;
+            var panelHeight = BaGameUiChrome.HeaderBlockHeight
+                              + BaGameUiChrome.HudBodyTopPadding
+                              + BaGameUiChrome.ToggleHudButtonHeight
+                              + BaGameUiChrome.HudBodyBottomPadding;
+            var buttonTopY = -(BaGameUiChrome.HeaderBlockHeight + BaGameUiChrome.HudBodyTopPadding)
+                             + BaGameUiChrome.ToggleHudButtonLift;
+
+            _panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
+            _panelRect.anchoredPosition = BuildingHudLayout.GetToggleHudPosition(panelWidth, panelHeight);
 
             if (_headerRect != null)
                 BaGameUiChrome.UpdateToggleHudFrames(_panelRect, _headerRect, panelWidth);
 
             if (_titleRect != null)
-                BaGameUiChrome.ApplyHeaderTitleInsets(_titleRect, _metrics.Scale);
+                BaGameUiChrome.ApplyHeaderTitleInsets(_titleRect, scale);
 
             if (_titleLabel != null)
-                BaGameUiChrome.ApplyHudTitleStyle(_titleLabel, _metrics.Scale);
+                BaGameUiChrome.ApplyHudTitleStyle(_titleLabel, scale);
 
             if (_toggleButtonRect != null)
             {
-                _toggleButtonRect.anchoredPosition = new Vector2(0f, _metrics.ButtonTopY);
-                _toggleButtonRect.sizeDelta = new Vector2(_metrics.FullButtonWidth, BaGameUiChrome.HudButtonHeight);
+                _toggleButtonRect.anchoredPosition = new Vector2(0f, buttonTopY);
+                _toggleButtonRect.sizeDelta = new Vector2(buttonWidth, BaGameUiChrome.ToggleHudButtonHeight);
             }
 
             if (_toggleLabel != null)
-                _toggleLabel.fontSize = BaGameUiChrome.HudButtonFontSize * _metrics.Scale;
+                _toggleLabel.fontSize = BaGameUiChrome.HudButtonFontSize * scale;
         }
 
         internal static void RefreshVisual()
@@ -189,7 +198,15 @@ namespace AutoShopping
                          "AutoShopping_ToggleHud_v0123",
                          "AutoShopping_ToggleHud_v0124",
                          "AutoShopping_ToggleHud_v0125",
-                         "AutoShopping_ToggleHud_v0126"
+                         "AutoShopping_ToggleHud_v0126",
+                         "AutoShopping_ToggleHud_v0127",
+                         "AutoShopping_ToggleHud_v0128",
+                         "AutoShopping_ToggleHud_v0129",
+                         "AutoShopping_ToggleHud_v0130",
+                         "AutoShopping_ToggleHud_v0131",
+                         "AutoShopping_ToggleHud_v0132",
+                         "AutoShopping_ToggleHud_v0133",
+                         "AutoShopping_ToggleHud_v0134"
                      })
             {
                 var legacy = GameObject.Find(legacyName);

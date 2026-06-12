@@ -54,6 +54,9 @@
   "autoshopping_error_nothing_to_drop": "Nothing to drop.",
   "autoshopping_error_insufficient_funds": "Insufficient funds.",
   "autoshopping_toggle_hint": "Press F8 to toggle Auto Shopping",
+  "autoshopping_options_header": "Auto Shopping",
+  "autoshopping_option_auto_open_on_enter": "Open AutoShopping on entering shop",
+  "autoshopping_option_auto_cart_on_enter": "Auto Cart on entering shop",
   "autoshopping_option_auto_pick_cart": "Auto pick cart",
   "autoshopping_option_auto_pick_cart_on": "Auto cart ON"
 }
