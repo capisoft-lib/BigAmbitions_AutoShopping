@@ -13,7 +13,7 @@ namespace AutoShopping
 
         internal const int MaxItemSlots = 8;
         internal const float VisibilityPollInterval = 0.2f;
-        internal const string Version = "0.12.0";
+        internal const string Version = "0.11.0";
 
         internal static bool AutoOpenOnEnter { get; private set; } = true;
         internal static bool AutoPickCartEnabled { get; private set; } = true;

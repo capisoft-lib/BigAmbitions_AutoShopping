@@ -1,4 +1,4 @@
-# Auto Shopping (v0.12.0)
+# Auto Shopping (v0.11.0)
 
 In-store shopping assistant for Big Ambitions. When you enter a supported store, the mod scans purchasable items and shows a catalog with icons, prices, and quantity controls.
 
