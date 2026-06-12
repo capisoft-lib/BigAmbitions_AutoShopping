@@ -1,34 +1,99 @@
 # Auto Shopping (v0.11.0)
 
-In-store shopping assistant for Big Ambitions. When you enter a supported store, the mod scans purchasable items and shows a catalog with icons, prices, and quantity controls.
+In-store shopping assistant for [Big Ambitions](https://store.steampowered.com/app/1331550/Big_Ambitions/). When you enter a supported store, the mod scans every purchasable shelf, builds a live catalog, and lets you plan a shopping run from a game-style HUD panel. Your character then walks, picks items, and checks out automatically.
 
 ## Supported stores
 
-- Retail self-service (supermarkets, etc.) — use **Take basket**
-- Wholesale (Metro, etc.) — use **Take hand truck** (up to 8 slots)
-- Cinema / theater — limited support (paper bag flow)
+| Store type | Examples | Container |
+|------------|----------|-----------|
+| **Retail self-service** | Supermarkets, convenience stores | Basket or shopping cart |
+| **Wholesale** | Metro-style warehouses | Hand truck (up to 8 slots) |
+| **Cinema / theater** | Concessions | Paper-bag flow (limited) |
 
-Not supported: restaurants, hairdressers, nightclubs, casinos (cashier-only flow).
+**Not supported:** restaurants, hairdressers, nightclubs, casinos, and any cashier-only business where the player cannot pick items from shelves.
+
+## Quick start
+
+1. Walk into a supported store — the catalog loads automatically.
+2. Take a container (**Pick basket** / **Pick container**) or enable **Auto cart on entering shop** in mod options.
+3. Use **+** / **−** to set desired quantities; the character walks to shelves and picks or drops items.
+4. Press **Pay** to walk to the register and complete the purchase.
+
+## Interface
+
+Two HUD elements appear while you are inside a supported store (hidden during pause menu, smartphone, interior designer, checkout UI, etc.):
+
+- **Toggle HUD** (compact side panel) — **Show** / **Hide** the main shopping panel.
+- **Shopping panel** (main catalog) — search, sort, quantity controls, container bar, totals, and actions.
+
+### Catalog
+
+- Live scan of all purchasable items in the current building
+- Icon, display name, unit or box price, and stock state (out-of-stock items are blocked)
+- **Search** bar to filter by name
+- **Sort** by item name or price (click column headers: none → ascending → descending)
+- **Way to** — draws a NavMesh route on the floor to the nearest shelf for that item
+- **+** / **−** — adjust desired quantity; picked quantity syncs as actions complete
+
+### Container bar
+
+Adapts to the store profile:
+
+- **Basket** — small retail stores
+- **Shopping cart** / **big cart** — larger self-service stores
+- **Hand truck** — wholesale
+- **Bare hands** — when no container is required or available
+
+Buttons pick up or put down the active container. Slot usage (`current / max`) reflects container capacity and the mod's 8-item slot cap, whichever is lower.
+
+### Footer
+
+- Running **total** and bank **balance**
+- **Clear list** — reset all desired quantities (drops excess picked items)
+- **Pay** — queue checkout; walks to the nearest register and opens the purchase UI
+- **Cancel actions** — stop the current automation queue
+- Status line for the active action (walking, picking, paying, errors, etc.)
 
 ## Controls
 
-- **F8** — toggle the Auto Shopping panel while inside a supported store
-- Panel opens automatically on entry (toggle in mod options)
+| Input | Action |
+|-------|--------|
+| **F8** | Toggle the main shopping panel (ignored while the search field is focused) |
+| Toggle HUD button | Show / hide the main panel |
+| Panel close button | Hide the main panel |
+
+## Mod options
+
+Available in the in-game mod options menu:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| **Open AutoShopping on entering shop** | On | Open the main panel when you enter a supported store |
+| **Auto cart on entering shop** | On | Automatically walk to and pick up the best available container on entry |
+
+## Localization
+
+Built-in strings for **English** and **French**, following the game's active locale. Money and number formatting use the same locale rules as the base game.
+
+## Requirements
+
+- Big Ambitions with mod support (SDK 0.11+)
+- Install the compiled mod folder into `ModsLocal/AutoShopping/` (see below)
 
 ## Build & install
+
+From the `bigambitions` project root:
 
 ```powershell
 powershell -NoProfile -File bigambitions/scripts/compile-install-auto-shopping.ps1
 ```
 
-Restart the game or reload the city after installing to `ModsLocal/AutoShopping/`.
+This compiles a player-mode `AutoShopping.dll`, copies locales and thumbnail, and installs to:
 
-## Features
+`%USERPROFILE%\AppData\LocalLow\Hovgaard Games\Big Ambitions\ModsLocal\AutoShopping\`
 
-- Product list with icon, name, unit/box price, stock state
-- `+` / `−` quantity — character auto-walks to pick or drop items
-- Basket or hand truck acquisition buttons
-- 8-item slot limit (or container capacity, whichever is lower)
-- Running total and balance display
-- **Pay** — auto-walk to checkout and submit order
-- **Clear list** / **Cancel actions**
+Restart the game or reload the city after installing.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
