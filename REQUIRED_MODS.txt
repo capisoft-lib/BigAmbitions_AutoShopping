@@ -1,0 +1,6 @@
+Workshop publish checklist:
+1. Upload AutoShopping.
+2. Players subscribe to AutoShopping only.
+   LIB_BaUnifiedUI ships bundled in AutoShopping/Dependencies/ (no separate Workshop item).
+
+AutoShopping has no other mod dependencies.

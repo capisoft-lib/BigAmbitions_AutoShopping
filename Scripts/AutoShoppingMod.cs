@@ -1,3 +1,5 @@
+using Capisoft.Lib.BaUnifiedUI.Chrome;
+using Capisoft.Lib.BaUnifiedUI.Core;
 using System;
 using System.Threading.Tasks;
 using BAModAPI;
@@ -17,7 +19,7 @@ namespace AutoShopping
         public Task OnLoadAsync(ModContext context)
         {
             AutoShoppingConfig.Initialize(context);
-            BaGameUiChrome.EnsureInitialized();
+            BaUiWidePanelChrome.EnsureInitialized();
             StoreBuildingWatcher.Subscribe();
 
             _driverObject = new GameObject("AutoShopping_Driver");
@@ -48,3 +50,4 @@ namespace AutoShopping
         }
     }
 }
+
