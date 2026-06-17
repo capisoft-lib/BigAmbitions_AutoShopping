@@ -1,3 +1,5 @@
+using Capisoft.Lib.BaUnifiedUI.Chrome;
+using Capisoft.Lib.BaUnifiedUI.Core;
 using System.Collections.Generic;
 using Helpers;
 using TMPro;
@@ -25,16 +27,16 @@ namespace AutoShopping
         private const float ScrollContentPadding = 12f;
         private const float FixedScrollHeight = RowHeight * VisibleRowCount + ScrollContentPadding;
         private static readonly float FixedPanelHeight =
-            BaGameUiChrome.HeaderBlockHeight
+            BaUiWidePanelChrome.HeaderBlockHeight
             + CartBarHeight
             + SearchBarTopMargin
             + SearchBarHeight
             + ListHeaderHeight
             + FixedScrollHeight
-            + BaGameUiChrome.FooterHeight;
+            + BaUiWidePanelChrome.FooterHeight;
 
         private static float ListBlockTopOffset =>
-            BaGameUiChrome.HeaderBlockHeight
+            BaUiWidePanelChrome.HeaderBlockHeight
             + CartBarHeight
             + SearchBarTopMargin
             + SearchBarHeight
@@ -119,27 +121,27 @@ namespace AutoShopping
             if (_root != null)
                 return;
 
-            BaGameUiChrome.EnsureInitialized();
+            BaUiWidePanelChrome.EnsureInitialized();
             _root = new GameObject(RootName);
             Object.DontDestroyOnLoad(_root);
-            BaGameUiChrome.SetupOverlayCanvas(_root, 9005, interactive: true);
+            BaUiWidePanelChrome.SetupOverlayCanvas(_root, 9005, interactive: true);
 
-            _panelRect = BaGameUiChrome.BuildPanel(
+            _panelRect = BaUiWidePanelChrome.BuildPanel(
                 _root.transform,
                 BuildingHudLayout.GetMainPanelWidth(),
                 FixedPanelHeight,
                 "AutoShoppingPanel",
                 out var header);
             _headerRect = header;
-            BaGameUiChrome.ConfigureBottomLeftHudAnchor(_panelRect);
+            BaUiWidePanelChrome.ConfigureBottomLeftHudAnchor(_panelRect);
 
-            _closeButtonRect = BaGameUiChrome.CreateHeaderCloseButton(header, Hide).GetComponent<RectTransform>();
+            _closeButtonRect = BaUiWidePanelChrome.CreateHeaderCloseButton(header, Hide).GetComponent<RectTransform>();
 
             var titleGo = new GameObject("Title", typeof(RectTransform));
             titleGo.transform.SetParent(header, false);
             _titleRect = titleGo.GetComponent<RectTransform>();
             _titleLabel = titleGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyTitleStyle(_titleLabel, 1f);
+            BaUiWidePanelChrome.ApplyTitleStyle(_titleLabel, 1f);
             _titleLabel.overflowMode = TextOverflowModes.Ellipsis;
             ApplyHeaderTitleLayout(1f);
             BuildCartBar();
@@ -147,7 +149,7 @@ namespace AutoShopping
             BuildListColumnHeaders();
             BuildScrollArea();
             BuildFooter();
-            BaGameUiChrome.ApplyUiLayer(_root);
+            BaUiWidePanelChrome.ApplyUiLayer(_root);
             ApplyLayoutIfNeeded(force: true);
 
             _root.SetActive(false);
@@ -161,8 +163,8 @@ namespace AutoShopping
             barRect.anchorMin = new Vector2(0f, 1f);
             barRect.anchorMax = new Vector2(1f, 1f);
             barRect.pivot = new Vector2(0.5f, 1f);
-            barRect.anchoredPosition = new Vector2(0f, -BaGameUiChrome.HeaderBlockHeight);
-            barRect.sizeDelta = new Vector2(-BaGameUiChrome.ContentInset * 2f, CartBarHeight);
+            barRect.anchoredPosition = new Vector2(0f, -BaUiWidePanelChrome.HeaderBlockHeight);
+            barRect.sizeDelta = new Vector2(-BaUiWidePanelChrome.ContentInset * 2f, CartBarHeight);
 
             var layout = barGo.GetComponent<HorizontalLayoutGroup>();
             layout.spacing = 8f;
@@ -171,7 +173,7 @@ namespace AutoShopping
             layout.childForceExpandWidth = true;
             layout.padding = new RectOffset(2, 2, 2, 2);
 
-            _pickCartButtonLabel = BaGameUiChrome.CreateButton(barGo.transform, ModUiText.BtnPickCart, 10f, 30f, OnPickCartClicked)
+            _pickCartButtonLabel = BaUiWidePanelChrome.CreateButton(barGo.transform, ModUiText.BtnPickCart, 10f, 30f, OnPickCartClicked)
                 .GetComponentInChildren<TextMeshProUGUI>();
 
             var stateGo = new GameObject("CartState", typeof(RectTransform), typeof(LayoutElement));
@@ -180,11 +182,11 @@ namespace AutoShopping
             stateLayout.minWidth = 100f;
             stateLayout.flexibleWidth = 1f;
             _cartStateLabel = stateGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(_cartStateLabel, 0.95f);
+            BaUiWidePanelChrome.ApplyBodyStyle(_cartStateLabel, 0.95f);
             _cartStateLabel.fontStyle = FontStyles.Bold;
             _cartStateLabel.alignment = TextAlignmentOptions.Center;
 
-            _dropCartButtonLabel = BaGameUiChrome.CreateButton(barGo.transform, ModUiText.BtnDropCart, 10f, 30f, OnDropCartClicked)
+            _dropCartButtonLabel = BaUiWidePanelChrome.CreateButton(barGo.transform, ModUiText.BtnDropCart, 10f, 30f, OnDropCartClicked)
                 .GetComponentInChildren<TextMeshProUGUI>();
         }
 
@@ -198,13 +200,13 @@ namespace AutoShopping
             searchRect.pivot = new Vector2(0.5f, 1f);
             searchRect.anchoredPosition = new Vector2(
                 0f,
-                -BaGameUiChrome.HeaderBlockHeight - CartBarHeight - SearchBarTopMargin);
-            searchRect.sizeDelta = new Vector2(-BaGameUiChrome.ContentInset * 2f, SearchBarHeight);
+                -BaUiWidePanelChrome.HeaderBlockHeight - CartBarHeight - SearchBarTopMargin);
+            searchRect.sizeDelta = new Vector2(-BaUiWidePanelChrome.ContentInset * 2f, SearchBarHeight);
 
             var bgGo = new GameObject("Background", typeof(RectTransform), typeof(Image));
             bgGo.transform.SetParent(searchGo.transform, false);
             var bgRect = bgGo.GetComponent<RectTransform>();
-            BaGameUiChrome.Stretch(bgRect);
+            BaUiWidePanelChrome.Stretch(bgRect);
             bgGo.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.35f);
 
             var textAreaGo = new GameObject("TextArea", typeof(RectTransform));
@@ -218,18 +220,18 @@ namespace AutoShopping
             var placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
             placeholderGo.transform.SetParent(textAreaGo.transform, false);
             var placeholderRect = placeholderGo.GetComponent<RectTransform>();
-            BaGameUiChrome.Stretch(placeholderRect);
+            BaUiWidePanelChrome.Stretch(placeholderRect);
             _searchPlaceholderLabel = placeholderGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(_searchPlaceholderLabel, 0.9f, muted: true);
+            BaUiWidePanelChrome.ApplyBodyStyle(_searchPlaceholderLabel, 0.9f, muted: true);
             _searchPlaceholderLabel.fontStyle = FontStyles.Italic;
             _searchPlaceholderLabel.text = ModUiText.SearchPlaceholder;
 
             var textGo = new GameObject("Text", typeof(RectTransform));
             textGo.transform.SetParent(textAreaGo.transform, false);
             var textRect = textGo.GetComponent<RectTransform>();
-            BaGameUiChrome.Stretch(textRect);
+            BaUiWidePanelChrome.Stretch(textRect);
             var textLabel = textGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(textLabel, 0.9f);
+            BaUiWidePanelChrome.ApplyBodyStyle(textLabel, 0.9f);
             textLabel.alignment = TextAlignmentOptions.MidlineLeft;
 
             _searchField = searchGo.AddComponent<TMP_InputField>();
@@ -240,7 +242,7 @@ namespace AutoShopping
             _searchField.onValueChanged.AddListener(OnSearchChanged);
             _searchField.onSelect.AddListener(_ => OnSearchFieldSelected());
 
-            var guard = searchGo.AddComponent<SearchInputHotkeyGuard>();
+            var guard = searchGo.AddComponent<BaUiInputGuard>();
             guard.Bind(_searchField);
         }
 
@@ -261,7 +263,7 @@ namespace AutoShopping
             headerRect.anchorMax = new Vector2(1f, 1f);
             headerRect.pivot = new Vector2(0.5f, 1f);
             headerRect.anchoredPosition = new Vector2(0f, -ListBlockTopOffset);
-            headerRect.sizeDelta = new Vector2(-BaGameUiChrome.ContentInset * 2f, ListHeaderHeight);
+            headerRect.sizeDelta = new Vector2(-BaUiWidePanelChrome.ContentInset * 2f, ListHeaderHeight);
 
             _colQtyLabel = CreateColumnHeader(
                 headerGo.transform,
@@ -317,7 +319,7 @@ namespace AutoShopping
             }
 
             var label = go.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyColumnHeaderStyle(label);
+            BaUiWidePanelChrome.ApplyColumnHeaderStyle(label);
             label.alignment = alignment;
             label.text = text;
             return label;
@@ -352,15 +354,15 @@ namespace AutoShopping
             var scrollRect = scrollGo.GetComponent<RectTransform>();
             scrollRect.anchorMin = Vector2.zero;
             scrollRect.anchorMax = Vector2.one;
-            scrollRect.offsetMin = new Vector2(BaGameUiChrome.ContentInset, BaGameUiChrome.FooterHeight + 8f);
-            scrollRect.offsetMax = new Vector2(-BaGameUiChrome.ContentInset, -ListBlockTopOffset);
+            scrollRect.offsetMin = new Vector2(BaUiWidePanelChrome.ContentInset, BaUiWidePanelChrome.FooterHeight + 8f);
+            scrollRect.offsetMax = new Vector2(-BaUiWidePanelChrome.ContentInset, -ListBlockTopOffset);
             var scrollImage = scrollGo.GetComponent<Image>();
-            scrollImage.color = BaGameUiChrome.ListInsetColor;
+            scrollImage.color = BaUiWidePanelChrome.ListInsetColor;
 
             var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Mask), typeof(Image));
             viewportGo.transform.SetParent(scrollGo.transform, false);
             var viewport = viewportGo.GetComponent<RectTransform>();
-            BaGameUiChrome.Stretch(viewport);
+            BaUiWidePanelChrome.Stretch(viewport);
             var viewportImage = viewportGo.GetComponent<Image>();
             viewportImage.color = new Color(1f, 1f, 1f, 0.02f);
 
@@ -402,9 +404,9 @@ namespace AutoShopping
             footerRect.anchorMax = new Vector2(1f, 0f);
             footerRect.pivot = new Vector2(0.5f, 0f);
             footerRect.anchoredPosition = Vector2.zero;
-            footerRect.sizeDelta = new Vector2(0f, BaGameUiChrome.FooterHeight);
+            footerRect.sizeDelta = new Vector2(0f, BaUiWidePanelChrome.FooterHeight);
 
-            var inset = BaGameUiChrome.ContentInset;
+            var inset = BaUiWidePanelChrome.ContentInset;
             var padH = new Vector2(inset, inset);
 
             var dividerGo = new GameObject("SummaryDivider", typeof(RectTransform), typeof(Image));
@@ -415,7 +417,7 @@ namespace AutoShopping
             dividerRect.pivot = new Vector2(0.5f, 1f);
             dividerRect.anchoredPosition = Vector2.zero;
             dividerRect.sizeDelta = new Vector2(-inset * 2f, 1f);
-            dividerGo.GetComponent<Image>().color = BaGameUiChrome.RowSeparatorColor;
+            dividerGo.GetComponent<Image>().color = BaUiWidePanelChrome.RowSeparatorColor;
 
             var metaRowGo = new GameObject("MetaRow", typeof(RectTransform));
             metaRowGo.transform.SetParent(footer.transform, false);
@@ -443,7 +445,7 @@ namespace AutoShopping
             _totalPrefixLabel.fontStyle = FontStyles.Bold;
 
             _totalValueLabel = CreateFooterLabel(totalRowGo.transform, TextAlignmentOptions.MidlineRight, 0f, 0f, 1f, muted: false);
-            BaGameUiChrome.ApplyTotalValueStyle(_totalValueLabel);
+            BaUiWidePanelChrome.ApplyTotalValueStyle(_totalValueLabel);
 
             var actionsRow = new GameObject("ActionsRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
             actionsRow.transform.SetParent(footer.transform, false);
@@ -452,7 +454,7 @@ namespace AutoShopping
             actionsRect.anchorMax = new Vector2(1f, 1f);
             actionsRect.pivot = new Vector2(0.5f, 1f);
             actionsRect.anchoredPosition = new Vector2(0f, -64f);
-            actionsRect.sizeDelta = new Vector2(-inset * 2f, BaGameUiChrome.PrimaryButtonHeight);
+            actionsRect.sizeDelta = new Vector2(-inset * 2f, BaUiWidePanelChrome.PrimaryButtonHeight);
             var actionsLayout = actionsRow.GetComponent<HorizontalLayoutGroup>();
             actionsLayout.spacing = 8f;
             actionsLayout.childAlignment = TextAnchor.MiddleCenter;
@@ -460,9 +462,9 @@ namespace AutoShopping
             actionsLayout.childForceExpandWidth = true;
             actionsLayout.padding = new RectOffset((int)padH.x, (int)padH.x, 0, 0);
 
-            BaGameUiChrome.CreateButton(actionsRow.transform, ModUiText.BtnClear, 10f, BaGameUiChrome.PrimaryButtonHeight, OnClearClicked);
-            BaGameUiChrome.CreateRedButton(actionsRow.transform, ModUiText.BtnPay, 10f, BaGameUiChrome.PrimaryButtonHeight, OnPayClicked);
-            BaGameUiChrome.CreateButton(actionsRow.transform, ModUiText.BtnCancelQueue, 10f, BaGameUiChrome.PrimaryButtonHeight, OnCancelQueueClicked);
+            BaUiWidePanelChrome.CreateButton(actionsRow.transform, ModUiText.BtnClear, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnClearClicked);
+            BaUiWidePanelChrome.CreateRedButton(actionsRow.transform, ModUiText.BtnPay, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnPayClicked);
+            BaUiWidePanelChrome.CreateButton(actionsRow.transform, ModUiText.BtnCancelQueue, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnCancelQueueClicked);
 
             var statusGo = new GameObject("Status", typeof(RectTransform));
             statusGo.transform.SetParent(footer.transform, false);
@@ -479,12 +481,12 @@ namespace AutoShopping
                 return;
 
             // Midpoint between Pay row bottom (incl. graphic bleed) and visible frame bottom.
-            var payButtonBottom = BaGameUiChrome.FooterStatusZoneHeight - BaGameUiChrome.HudButtonGraphicBleedBottom;
-            var frameBottom = BaGameUiChrome.FrameOffsetY;
+            var payButtonBottom = BaUiWidePanelChrome.FooterStatusZoneHeight - BaUiWidePanelChrome.HudButtonGraphicBleedBottom;
+            var frameBottom = BaUiWidePanelChrome.FrameOffsetY;
             var gapTop = payButtonBottom;
             var gapBottom = frameBottom;
             var gapHeight = gapTop - gapBottom;
-            var statusCenterY = (gapTop + gapBottom) * 0.5f - BaGameUiChrome.FooterStatusVerticalNudge;
+            var statusCenterY = (gapTop + gapBottom) * 0.5f - BaUiWidePanelChrome.FooterStatusVerticalNudge;
 
             _statusRect.anchorMin = Vector2.zero;
             _statusRect.anchorMax = new Vector2(1f, 0f);
@@ -540,7 +542,7 @@ namespace AutoShopping
             }
 
             var text = go.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(text, scale, muted);
+            BaUiWidePanelChrome.ApplyBodyStyle(text, scale, muted);
             text.alignment = alignment;
             return text;
         }
@@ -726,8 +728,8 @@ namespace AutoShopping
             var availableHeight = Screen.height - BuildingHudLayout.MainPanelTopScreenMargin - panelBottom;
             var panelHeight = Mathf.Clamp(
                 FixedPanelHeight,
-                BaGameUiChrome.MinPanelHeight,
-                Mathf.Max(BaGameUiChrome.MinPanelHeight, availableHeight));
+                BaUiWidePanelChrome.MinPanelHeight,
+                Mathf.Max(BaUiWidePanelChrome.MinPanelHeight, availableHeight));
             var panelWidth = BuildingHudLayout.GetMainPanelWidth();
 
             if (!force
@@ -743,9 +745,9 @@ namespace AutoShopping
             _panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
             _panelRect.anchoredPosition = new Vector2(panelPos.x, panelBottom);
 
-            var scale = BaGameUiChrome.GetScale(panelWidth);
-            BaGameUiChrome.UpdatePanelFrames(_panelRect, _headerRect, panelWidth);
-            BaGameUiChrome.ApplyHeaderCloseButtonLayout(_closeButtonRect, scale);
+            var scale = BaUiWidePanelChrome.GetScale(panelWidth);
+            BaUiWidePanelChrome.UpdatePanelFrames(_panelRect, _headerRect, panelWidth);
+            BaUiWidePanelChrome.ApplyHeaderCloseButtonLayout(_closeButtonRect, scale);
             ApplyHeaderTitleLayout(scale);
             ApplyStatusStyle();
         }
@@ -756,17 +758,17 @@ namespace AutoShopping
                 return;
 
             var titleScale = Mathf.Clamp(scale, 0.85f, 1.15f);
-            var padY = BaGameUiChrome.HeaderTextPaddingY * titleScale;
-            var closeReserve = BaGameUiChrome.HeaderCloseButtonSize + 14f * titleScale;
+            var padY = BaUiWidePanelChrome.HeaderTextPaddingY * titleScale;
+            var closeReserve = BaUiWidePanelChrome.HeaderCloseButtonSize + 14f * titleScale;
 
             _titleRect.anchorMin = Vector2.zero;
             _titleRect.anchorMax = Vector2.one;
-            BaGameUiChrome.ApplyHeaderTitleInsets(_titleRect, titleScale);
+            BaUiWidePanelChrome.ApplyHeaderTitleInsets(_titleRect, titleScale);
             _titleRect.offsetMax = new Vector2(-closeReserve, -padY);
 
             var storeName = StoreSession.Current?.Profile?.BusinessDisplayName;
             _titleLabel.text = ModUiText.FormatPanelTitle(storeName);
-            BaGameUiChrome.ApplyTitleStyle(_titleLabel, titleScale);
+            BaUiWidePanelChrome.ApplyTitleStyle(_titleLabel, titleScale);
         }
 
         private static void ApplyStatusStyle()
@@ -774,7 +776,7 @@ namespace AutoShopping
             if (_statusLabel == null)
                 return;
 
-            BaGameUiChrome.ApplyBodyStyle(_statusLabel, StatusFontSize / 14f, muted: true);
+            BaUiWidePanelChrome.ApplyBodyStyle(_statusLabel, StatusFontSize / 14f, muted: true);
             _statusLabel.alignment = TextAlignmentOptions.Center;
         }
 
@@ -960,7 +962,7 @@ namespace AutoShopping
             separatorRect.pivot = new Vector2(0.5f, 0f);
             separatorRect.anchoredPosition = Vector2.zero;
             separatorRect.sizeDelta = new Vector2(-8f, 1f);
-            separatorGo.GetComponent<Image>().color = BaGameUiChrome.RowSeparatorColor;
+            separatorGo.GetComponent<Image>().color = BaUiWidePanelChrome.RowSeparatorColor;
 
             var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
             iconGo.transform.SetParent(rowGo.transform, false);
@@ -982,7 +984,7 @@ namespace AutoShopping
             nameRect.offsetMin = new Vector2(IconColumnWidth, 0f);
             nameRect.offsetMax = new Vector2(-RightColumnsWidth, 0f);
             var nameLabel = nameGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(nameLabel, 0.95f);
+            BaUiWidePanelChrome.ApplyBodyStyle(nameLabel, 0.95f);
             nameLabel.alignment = TextAlignmentOptions.MidlineLeft;
             nameLabel.text = product.DisplayName;
 
@@ -994,19 +996,19 @@ namespace AutoShopping
             wayToRect.pivot = new Vector2(1f, 0.5f);
             wayToRect.anchoredPosition = new Vector2(-(QtyColumnWidth + PriceColumnWidth + 2f), 0f);
             wayToRect.sizeDelta = new Vector2(WayToColumnWidth, 28f);
-            var btnWayTo = BaGameUiChrome.CreateVanillaButton(
+            var btnWayTo = BaUiWidePanelChrome.CreateVanillaButton(
                 wayToGo.transform,
                 ModUiText.BtnWayTo,
                 WayToColumnWidth,
                 28f,
                 1f,
                 null,
-                VanillaButtonStyle.Blue,
+                BaVanillaButtonStyle.Blue,
                 fontSize: 11f,
                 bleedBottom: false);
             ConfigureSingleLineButtonLabel(btnWayTo);
             StretchRect(btnWayTo.GetComponent<RectTransform>());
-            var btnWayToImage = BaGameUiChrome.GetVanillaButtonImage(btnWayTo);
+            var btnWayToImage = BaUiWidePanelChrome.GetVanillaButtonImage(btnWayTo);
 
             var priceGo = new GameObject("Price", typeof(RectTransform));
             priceGo.transform.SetParent(rowGo.transform, false);
@@ -1017,13 +1019,13 @@ namespace AutoShopping
             priceRect.anchoredPosition = new Vector2(-QtyColumnWidth, 0f);
             priceRect.sizeDelta = new Vector2(PriceColumnWidth, 0f);
             var priceLabel = priceGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(priceLabel, 0.92f);
+            BaUiWidePanelChrome.ApplyBodyStyle(priceLabel, 0.92f);
             priceLabel.alignment = TextAlignmentOptions.Center;
             priceLabel.text = product.InStock
                 ? LocaleFormat.Money(product.LinePrice)
                 : ModUiText.OutOfStock;
             if (!product.InStock)
-                priceLabel.color = BaGameUiChrome.WarningTextColor;
+                priceLabel.color = BaUiWidePanelChrome.WarningTextColor;
 
             var qtyGo = new GameObject("Qty", typeof(RectTransform));
             qtyGo.transform.SetParent(rowGo.transform, false);
@@ -1034,7 +1036,7 @@ namespace AutoShopping
             qtyRect.anchoredPosition = new Vector2(-4f, 0f);
             qtyRect.sizeDelta = new Vector2(QtyColumnWidth - 8f, 30f);
 
-            var btnMinus = BaGameUiChrome.CreateQtyButton(qtyGo.transform, "-", 30f, 28f, null);
+            var btnMinus = BaUiWidePanelChrome.CreateQtyButton(qtyGo.transform, "-", 30f, 28f, null);
             var minusRect = btnMinus.GetComponent<RectTransform>();
             minusRect.anchorMin = new Vector2(0f, 0.5f);
             minusRect.anchorMax = new Vector2(0f, 0.5f);
@@ -1048,11 +1050,11 @@ namespace AutoShopping
             qtyLabelRect.anchorMax = new Vector2(0.5f, 0.5f);
             qtyLabelRect.sizeDelta = new Vector2(28f, 24f);
             var qtyLabel = qtyLabelGo.AddComponent<TextMeshProUGUI>();
-            BaGameUiChrome.ApplyBodyStyle(qtyLabel, 0.95f);
+            BaUiWidePanelChrome.ApplyBodyStyle(qtyLabel, 0.95f);
             qtyLabel.alignment = TextAlignmentOptions.Center;
             qtyLabel.text = LocaleFormat.Integer(product.DesiredQuantity);
 
-            var btnPlus = BaGameUiChrome.CreateQtyButton(qtyGo.transform, "+", 30f, 28f, null);
+            var btnPlus = BaUiWidePanelChrome.CreateQtyButton(qtyGo.transform, "+", 30f, 28f, null);
             var plusRect = btnPlus.GetComponent<RectTransform>();
             plusRect.anchorMin = new Vector2(1f, 0.5f);
             plusRect.anchorMax = new Vector2(1f, 0.5f);
@@ -1136,15 +1138,15 @@ namespace AutoShopping
 
                 var image = row.BtnWayToImage;
                 if (image == null && row.BtnWayTo != null)
-                    image = row.BtnWayToImage = BaGameUiChrome.GetVanillaButtonImage(row.BtnWayTo);
+                    image = row.BtnWayToImage = BaUiWidePanelChrome.GetVanillaButtonImage(row.BtnWayTo);
                 if (image == null)
                     continue;
 
                 var selected = !string.IsNullOrEmpty(activeItem) &&
                                row.Product.ItemName == activeItem;
-                BaGameUiChrome.ApplyVanillaButtonImageStyle(
+                BaUiWidePanelChrome.ApplyVanillaButtonImageStyle(
                     image,
-                    selected ? VanillaButtonStyle.Green : VanillaButtonStyle.Blue);
+                    selected ? BaVanillaButtonStyle.Green : BaVanillaButtonStyle.Blue);
             }
         }
 
@@ -1330,3 +1332,4 @@ namespace AutoShopping
         internal static bool IsSearchFocused => _searchField != null && _searchField.isFocused;
     }
 }
+

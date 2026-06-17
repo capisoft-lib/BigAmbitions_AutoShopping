@@ -1,4 +1,4 @@
-# Auto Shopping (v0.11.1)
+# Auto Shopping (v0.11.2)
 
 In-store shopping assistant for [Big Ambitions](https://store.steampowered.com/app/1331550/Big_Ambitions/). When you enter a supported store, the mod scans every purchasable shelf, builds a live catalog, and lets you plan a shopping run from a game-style HUD panel. Your character then walks, picks items, and checks out automatically.
 
@@ -79,6 +79,7 @@ Built-in strings for **English** and **French**, following the game's active loc
 
 - Big Ambitions with mod support (SDK 0.11+)
 - Install the compiled mod folder into `ModsLocal/AutoShopping/` (see below)
+- **LIB_BaUnifiedUI** is bundled under `Dependencies/` at build time (no separate Workshop subscription)
 
 ## Build & install
 

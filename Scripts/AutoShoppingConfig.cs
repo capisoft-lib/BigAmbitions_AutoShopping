@@ -13,10 +13,15 @@ namespace AutoShopping
 
         internal const int MaxItemSlots = 8;
         internal const float VisibilityPollInterval = 0.2f;
-        internal const string Version = "0.11.1";
+        internal const string Version = "0.11.2";
 
-        internal static bool AutoOpenOnEnter { get; private set; } = true;
-        internal static bool AutoPickCartEnabled { get; private set; } = true;
+        private const bool DefaultAutoOpenOnEnter = true;
+        private const bool DefaultAutoPickCartEnabled = true;
+        private const string OptionsDefaultsRevisionKey = "options_defaults_rev";
+        private const int OptionsDefaultsRevision = 1;
+
+        internal static bool AutoOpenOnEnter { get; private set; } = DefaultAutoOpenOnEnter;
+        internal static bool AutoPickCartEnabled { get; private set; } = DefaultAutoPickCartEnabled;
         internal static bool LogEnabled { get; private set; }
         internal static bool LogVerbose { get; private set; }
         internal static bool LogPerf { get; private set; }
@@ -26,8 +31,9 @@ namespace AutoShopping
         internal static void Initialize(ModContext context)
         {
             _context = context;
-            AutoOpenOnEnter = LoadModOptionBool(AutoOpenOnEnterKey, defaultValue: true);
-            AutoPickCartEnabled = LoadModOptionBool(AutoPickCartKey, defaultValue: true);
+            MigrateOptionsDefaultsIfNeeded();
+            AutoOpenOnEnter = LoadModOptionBool(AutoOpenOnEnterKey, DefaultAutoOpenOnEnter);
+            AutoPickCartEnabled = LoadModOptionBool(AutoPickCartKey, DefaultAutoPickCartEnabled);
             LogEnabled = LoadLegacyBool(LogEnabledKey, defaultValue: false);
             LogVerbose = LoadLegacyBool(LogVerboseKey, defaultValue: false);
             LogPerf = LoadLegacyBool(PerfLogKey, defaultValue: false);
@@ -51,9 +57,9 @@ namespace AutoShopping
 
             var options = new ModOptions()
                 .AddHeader("autoshopping_options_header")
-                .AddToggle(AutoOpenOnEnterKey, "autoshopping_option_auto_open_on_enter", AutoOpenOnEnter,
+                .AddToggle(AutoOpenOnEnterKey, "autoshopping_option_auto_open_on_enter", DefaultAutoOpenOnEnter,
                     value => AutoOpenOnEnter = value)
-                .AddToggle(AutoPickCartKey, "autoshopping_option_auto_cart_on_enter", AutoPickCartEnabled,
+                .AddToggle(AutoPickCartKey, "autoshopping_option_auto_cart_on_enter", DefaultAutoPickCartEnabled,
                     value => AutoPickCartEnabled = value);
 
             try
@@ -66,6 +72,28 @@ namespace AutoShopping
             }
         }
 
+        private static void MigrateOptionsDefaultsIfNeeded()
+        {
+            if (_context == null)
+                return;
+
+            var revisionKey = BuildModOptionKey(OptionsDefaultsRevisionKey);
+            if (UnityEngine.PlayerPrefs.GetInt(revisionKey, 0) >= OptionsDefaultsRevision)
+                return;
+
+            SaveModOptionBool(AutoOpenOnEnterKey, DefaultAutoOpenOnEnter);
+            SaveModOptionBool(AutoPickCartKey, DefaultAutoPickCartEnabled);
+            UnityEngine.PlayerPrefs.SetInt(revisionKey, OptionsDefaultsRevision);
+        }
+
+        private static void SaveModOptionBool(string optionId, bool value)
+        {
+            if (_context == null || string.IsNullOrEmpty(optionId))
+                return;
+
+            UnityEngine.PlayerPrefs.SetInt(BuildModOptionKey(optionId), value ? 1 : 0);
+        }
+
         private static bool LoadModOptionBool(string optionId, bool defaultValue)
         {
             if (_context == null || string.IsNullOrEmpty(optionId))
@@ -74,14 +102,6 @@ namespace AutoShopping
             var key = BuildModOptionKey(optionId);
             if (UnityEngine.PlayerPrefs.HasKey(key))
                 return UnityEngine.PlayerPrefs.GetInt(key) != 0;
-
-            var legacyKey = BuildLegacyPrefsKey(optionId);
-            if (UnityEngine.PlayerPrefs.HasKey(legacyKey))
-            {
-                var value = UnityEngine.PlayerPrefs.GetInt(legacyKey) != 0;
-                UnityEngine.PlayerPrefs.SetInt(key, value ? 1 : 0);
-                return value;
-            }
 
             return defaultValue;
         }
