@@ -16,13 +16,12 @@ namespace AutoShopping
             80f + BaUiWidePanelChrome.FooterStatusVerticalSavings + BaUiWidePanelChrome.PanelTopClearanceSavings;
         internal const float ToggleHudTopOffset = 180f;
         internal const float RightScreenMargin = 16f;
-        internal const float ToggleHudWidthScale = 0.7f;
         internal const float MainPanelLeftMargin = BaUiWidePanelChrome.ScreenMarginX + 3f;
-        internal const float ToggleHudRightMargin = RightScreenMargin - 15f;
+        internal const float ToggleHudRightMargin = RightScreenMargin;
 
         internal static float GetPanelWidth() => PanelWidth;
 
-        internal static float GetToggleHudWidth() => PanelWidth * ToggleHudWidthScale;
+        internal static float GetToggleHudWidth() => PanelWidth;
 
         internal static float GetMainPanelWidth() => MainPanelWidth;
 

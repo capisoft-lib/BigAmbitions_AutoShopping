@@ -53,10 +53,19 @@
   "autoshopping_error_nothing_to_pay": "Rien à payer.",
   "autoshopping_error_nothing_to_drop": "Rien à déposer.",
   "autoshopping_error_insufficient_funds": "Fonds insuffisants.",
-  "autoshopping_toggle_hint": "Appuyez sur F8 pour Auto Shopping",
+  "autoshopping_toggle_hint": "Utilisez le raccourci configuré pour afficher ou masquer Auto Shopping",
   "autoshopping_options_header": "Auto Shopping",
   "autoshopping_option_auto_open_on_enter": "Ouvrir AutoShopping en entrant dans un magasin",
   "autoshopping_option_auto_cart_on_enter": "Panier auto en entrant dans un magasin",
   "autoshopping_option_auto_pick_cart": "Prise auto panier",
-  "autoshopping_option_auto_pick_cart_on": "Panier auto ON"
+  "autoshopping_option_auto_pick_cart_on": "Panier auto ON",
+  "autoshopping_option_toggle_shortcut": "Raccourci afficher / masquer",
+  "autoshopping_option_route_line_color": "Couleur du trajet « Aller à »",
+  "autoshopping_color_picker_unavailable": "Sélecteur de couleur indisponible",
+  "autoshopping_option_clear_list_shortcut": "Raccourci vider la liste",
+  "autoshopping_option_pay_shortcut": "Raccourci payer",
+  "autoshopping_option_cancel_actions_shortcut": "Raccourci annuler les actions",
+  "autoshopping_shortcut_unbound": "Non assigné",
+  "autoshopping_shortcut_capture": "Appuyez sur une touche...",
+  "autoshopping_shortcut_conflict": "Conflit"
 }

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Capisoft.Lib.BaUnifiedUI.Options;
+using Capisoft.Lib.BaUnifiedUI.Shortcuts;
 using Localizor;
 using UnityEngine;
 
@@ -36,10 +38,8 @@ namespace AutoShopping
         internal static string BtnPickCart => Loc("autoshopping_btn_pick_cart", "Pick container");
         internal static string BtnPickBasket => Loc("autoshopping_btn_pick_basket", "Pick basket");
         internal static string BtnDropCart => Loc("autoshopping_btn_drop_cart", "Put down");
-        private const string ToggleHotkeySuffix = " [F8]";
-
-        internal static string BtnHide => Loc("autoshopping_btn_hide", "Hide") + ToggleHotkeySuffix;
-        internal static string BtnShow => Loc("autoshopping_btn_show", "Show") + ToggleHotkeySuffix;
+        internal static string BtnHide => Loc("autoshopping_btn_hide", "Hide");
+        internal static string BtnShow => Loc("autoshopping_btn_show", "Show");
         internal static string StatusCartAlreadyHeld => Loc("autoshopping_status_cart_already_held", "Already holding a container.");
         internal static string ErrorNoCartToDrop => Loc("autoshopping_error_no_cart_to_drop", "No container to put down.");
         internal static string StatusDroppingContainer => Loc("autoshopping_status_dropping_container", "Putting container down…");
@@ -101,7 +101,16 @@ namespace AutoShopping
         internal static string ErrorNoRegister => Loc("autoshopping_error_no_register", "No checkout found.");
         internal static string ErrorNothingToPay => Loc("autoshopping_error_nothing_to_pay", "Nothing to pay for.");
         internal static string ErrorNothingToDrop => Loc("autoshopping_error_nothing_to_drop", "Nothing to drop.");
-        internal static string ToggleHint => Loc("autoshopping_toggle_hint", "Press F8 to toggle Auto Shopping");
+        internal static string ToggleHint =>
+            Loc("autoshopping_toggle_hint", "Use the configured shortcut to toggle Auto Shopping");
+        internal static BaKeybindUiText CreateShortcutUiText() =>
+            new BaKeybindUiText(
+                Loc("autoshopping_shortcut_unbound", "Unbound"),
+                Loc("autoshopping_shortcut_capture", "Press a key..."),
+                Loc("autoshopping_shortcut_conflict", "Conflict"));
+        internal static BaColorPickerUiText CreateColorPickerUiText() =>
+            new BaColorPickerUiText(
+                Loc("autoshopping_color_picker_unavailable", "Color picker unavailable"));
         internal static string OptionAutoPickCart => Loc("autoshopping_option_auto_pick_cart", "Auto pick cart");
         internal static string OptionAutoPickCartOn => Loc("autoshopping_option_auto_pick_cart_on", "Auto cart ON");
 

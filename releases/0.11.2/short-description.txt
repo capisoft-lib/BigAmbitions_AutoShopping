@@ -1,0 +1,1 @@
+Auto Shopping: in-store catalog, search, sort, shelf routes, and automated pick/pay. LIB BA Unified UI bundled. English + French. EA 0.11.

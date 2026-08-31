@@ -1,6 +1,9 @@
-Workshop publish checklist:
-1. Upload AutoShopping.
-2. Players subscribe to AutoShopping only.
-   LIB_BaUnifiedUI ships bundled in AutoShopping/Dependencies/ (no separate Workshop item).
+LIB_BaUnifiedUI 1.0.0+
 
-AutoShopping has no other mod dependencies.
+Workshop publish checklist:
+1. Publish LIB_BaUnifiedUI 1.0.0+ first (ModId must match exactly).
+2. Add LIB BA Unified UI to Auto Shopping's Steam Required Items.
+3. Players subscribe to and enable both mods.
+4. Confirm Auto Shopping contains no bundled LIB_BaUnifiedUI DLL.
+
+Auto Shopping has no other mod dependencies.

@@ -1,0 +1,1 @@
+Auto Shopping 1.0.1: live store catalog, customizable shelf routes and automatic pick, drop and checkout. All 22 game languages. Big Ambitions EA 0.11 and 1.0; requires LIB BA Unified UI 1.0.0+.

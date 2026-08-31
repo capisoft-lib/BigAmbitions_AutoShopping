@@ -19,6 +19,9 @@ namespace AutoShopping
         public Task OnLoadAsync(ModContext context)
         {
             AutoShoppingConfig.Initialize(context);
+            Debug.Log(
+                "[AutoShopping] Auto Shopping " + AutoShoppingConfig.Version +
+                " city load | mod_root=" + (context?.ModRootPath ?? "?"));
             BaUiWidePanelChrome.EnsureInitialized();
             StoreBuildingWatcher.Subscribe();
 

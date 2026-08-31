@@ -15,10 +15,10 @@ MonoBehaviour:
   ModId: AutoShopping
   DisplayName: Auto Shopping
   Author: capisoft-lib
-  Version: 0.11.2
+  Version: 1.0.1
   AssetBundleName: 
   ModAssembly: {fileID: 5897886265953266890, guid: a7b8c9d0e1f243a5b6c7d8e9f0a1b2c3, type: 3}
-  LocalesFolder: {fileID: 102900000, guid: b8c9d0e1f2a34b5c6d7e8f9a0b1c2d3, type: 3}
+  LocalesFolder: {fileID: 102900000, guid: b8c9d0e1f2a34b5c6d7e8f9a0b1c2d30, type: 3}
   DependenciesFolder: {fileID: 0}
   EnumsFile: {fileID: 0}
   TargetPlatforms: 1

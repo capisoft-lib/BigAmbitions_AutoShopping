@@ -9,13 +9,14 @@ namespace AutoShopping
   {
     private const string RootName = "AutoShopping_ItemRoute";
     private const float LineWidth = 0.1f;
+    private const float FloorOffset = 0.035f;
     private const float RecalcIntervalSeconds = 0.15f;
     private const float OriginMoveResampleSq = 0.75f;
-    private static readonly Color LineColor = new Color(0.2f, 0.85f, 1f, 0.9f);
+    private static Color _lineColor = AutoShoppingConfig.DefaultRouteLineColor;
 
     private static readonly NavMeshPath NavPath = new NavMeshPath();
     private static GameObject _root;
-    private static LineRenderer _line;
+    private static HybridStoreRouteStroke _line;
     private static string _activeItemName = string.Empty;
     private static Vector3 _targetPosition;
     private static float _lastRecalcTime = -999f;
@@ -25,6 +26,12 @@ namespace AutoShopping
     internal static bool HasActiveRoute => !string.IsNullOrEmpty(_activeItemName);
 
     internal static string ActiveItemName => _activeItemName;
+
+    internal static void SetLineColor(Color color)
+    {
+      _lineColor = color;
+      ApplyLineStyle();
+    }
 
     internal static bool IsActiveItem(string itemName) =>
       !string.IsNullOrEmpty(itemName) &&
@@ -179,7 +186,7 @@ namespace AutoShopping
 
     private static void EnsureLine()
     {
-      if (_line != null && _root != null)
+      if (_line != null && _line.IsReady && _root != null)
         return;
 
       _root = GameObject.Find(RootName);
@@ -189,9 +196,7 @@ namespace AutoShopping
         Object.DontDestroyOnLoad(_root);
       }
 
-      _line = _root.GetComponent<LineRenderer>();
-      if (_line == null)
-        _line = _root.AddComponent<LineRenderer>();
+      _line = HybridStoreRouteStroke.Attach(_root);
 
       ApplyLineStyle();
     }
@@ -201,26 +206,7 @@ namespace AutoShopping
       if (_line == null)
         return;
 
-      _line.useWorldSpace = true;
-      _line.alignment = LineAlignment.View;
-      _line.textureMode = LineTextureMode.Stretch;
-      _line.numCapVertices = 4;
-      _line.numCornerVertices = 4;
-      _line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-      _line.receiveShadows = false;
-      _line.loop = false;
-      _line.startWidth = LineWidth;
-      _line.endWidth = LineWidth;
-      _line.startColor = LineColor;
-      _line.endColor = LineColor;
-
-      var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
-      if (shader != null)
-      {
-        if (_line.material == null || _line.material.shader != shader)
-          _line.material = new Material(shader);
-        _line.material.color = LineColor;
-      }
+      _line.ApplyStyle(LineWidth, _lineColor);
     }
 
     private static void ShowLine(Vector3[] points)
@@ -234,8 +220,10 @@ namespace AutoShopping
 
       _pathVisible = true;
       _root.SetActive(true);
-      _line.positionCount = points.Length;
-      _line.SetPositions(points);
+      var elevated = new Vector3[points.Length];
+      for (var i = 0; i < points.Length; i++)
+        elevated[i] = points[i] + Vector3.up * FloorOffset;
+      _line.SetPositions(elevated);
     }
 
     private static void HideLine()

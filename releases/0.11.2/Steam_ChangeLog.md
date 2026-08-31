@@ -1,0 +1,4 @@
+- **LIB BA Unified UI** — shopping panels use the shared vanilla-style UI library (replaces local chrome code)
+- **LIB BA Unified UI bundled** — ships in `Auto Shopping/Dependencies/` (no separate Workshop mod)
+- **Mod options defaults** — open panel on shop entry and auto cart on entry are on by default
+- **Building exit safety** — cancels automation and player navigation when leaving a store

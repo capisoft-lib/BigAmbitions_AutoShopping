@@ -1,5 +1,7 @@
 using Capisoft.Lib.BaUnifiedUI.Chrome;
+using Capisoft.Lib.BaUnifiedUI.Controls;
 using Capisoft.Lib.BaUnifiedUI.Core;
+using Capisoft.Lib.BaUnifiedUI.Fluent;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,16 +11,13 @@ namespace AutoShopping
     /// <summary>Top-right lateral panel — visual parity with VoogleRoute RouteActionPanel.</summary>
     internal static class AutoShoppingToggleHud
     {
-        private const string RootName = "AutoShopping_ToggleHud_v0135";
+        private const string RootName = "AutoShopping_ToggleHud_v0137";
+        private const string DragPositionId = "AutoShopping.ToggleHud";
 
         private static GameObject _root;
         private static RectTransform _panelRect;
-        private static RectTransform _headerRect;
-        private static RectTransform _titleRect;
-        private static RectTransform _toggleButtonRect;
-        private static BaUiWidePanelChrome.HudPanelMetrics _metrics;
+        private static BaUiDragState _dragState;
         private static TextMeshProUGUI _titleLabel;
-        private static Image _toggleButtonImage;
         private static TextMeshProUGUI _toggleLabel;
         private static bool _lastActive;
         private static bool _lastMainOpen;
@@ -37,40 +36,38 @@ namespace AutoShopping
             if (_root != null)
                 return;
 
-            BaUiWidePanelChrome.EnsureInitialized();
-            _root = new GameObject(RootName);
-            Object.DontDestroyOnLoad(_root);
-            BaUiWidePanelChrome.SetupOverlayCanvas(_root, 9004, interactive: true);
+            BaUi.EnsureReady();
+            var metrics = BaUi.Layout.CreateMetrics(1f);
+            var built = BaUi
+                .Overlay(RootName, 9004)
+                .Panel(BaPanelRecipe.ActionPanel, metrics.PanelWidth, height: metrics.PanelHeight)
+                .Draggable(DragPositionId)
+                .Header(header => header.TitleLeft(ModUiText.PanelTitle, upperCase: true))
+                .SkipBody()
+                .AfterPanelChildren(panel =>
+                    BaUiControls.CreatePanelTopActionButton(
+                        panel.Panel,
+                        "Toggle",
+                        new Vector2(0f, metrics.ButtonTopY),
+                        metrics.ContentWidth,
+                        metrics.ButtonHeight,
+                        metrics.Scale,
+                        BaButtonStyle.Blue,
+                        OnToggleClicked,
+                        out _,
+                        out _toggleLabel))
+                .Build();
 
-            _metrics = new BaUiWidePanelChrome.HudPanelMetrics(1f);
-            _panelRect = BaUiWidePanelChrome.BuildToggleHudPanel(_root.transform, out var header, out _);
-            _headerRect = header;
+            _root = built.Root;
+            _panelRect = built.Panel;
+            _dragState = built.Drag;
             BaUiWidePanelChrome.ConfigureBottomLeftHudAnchor(_panelRect);
-
-            var titleGo = new GameObject("Title", typeof(RectTransform));
-            titleGo.transform.SetParent(header, false);
-            _titleRect = titleGo.GetComponent<RectTransform>();
-            _titleRect.anchorMin = Vector2.zero;
-            _titleRect.anchorMax = Vector2.one;
-            _titleLabel = titleGo.AddComponent<TextMeshProUGUI>();
-            BaUiWidePanelChrome.ApplyHudTitleStyle(_titleLabel, _metrics.Scale);
-            _titleLabel.text = ModUiText.PanelTitle;
-            _titleLabel.overflowMode = TextOverflowModes.Ellipsis;
-
-            var toggleButton = BaUiWidePanelChrome.CreateHudActionButton(
-                _panelRect,
-                ModUiText.BtnShow,
-                _metrics.FullButtonWidth,
-                BaUiWidePanelChrome.HudButtonHeight,
-                _metrics.Scale,
-                OnToggleClicked,
-                blue: true);
-            _toggleButtonRect = toggleButton.GetComponent<RectTransform>();
-            _toggleButtonRect.anchorMin = _toggleButtonRect.anchorMax = new Vector2(0.5f, 1f);
-            _toggleButtonRect.pivot = new Vector2(0.5f, 1f);
-            _toggleButtonImage = toggleButton.GetComponentInChildren<Image>();
-            _toggleLabel = toggleButton.GetComponentInChildren<TextMeshProUGUI>();
-
+            var titleTransform = built.Header.Find("Title");
+            _titleLabel = titleTransform != null
+                ? titleTransform.GetComponent<TextMeshProUGUI>()
+                : null;
+            if (_titleLabel != null)
+                _titleLabel.overflowMode = TextOverflowModes.Ellipsis;
             ApplyFixedLayout();
             _forceApply = true;
             RefreshVisual();
@@ -114,35 +111,9 @@ namespace AutoShopping
                 return;
 
             var panelWidth = BuildingHudLayout.GetToggleHudWidth();
-            var scale = panelWidth / BaUiWidePanelChrome.RefPanelWidth;
-            var buttonWidth = panelWidth - BaUiWidePanelChrome.ToggleHudButtonMarginX * 2f;
-            var panelHeight = BaUiWidePanelChrome.HeaderBlockHeight
-                              + BaUiWidePanelChrome.HudBodyTopPadding
-                              + BaUiWidePanelChrome.ToggleHudButtonHeight
-                              + BaUiWidePanelChrome.HudBodyBottomPadding;
-            var buttonTopY = -(BaUiWidePanelChrome.HeaderBlockHeight + BaUiWidePanelChrome.HudBodyTopPadding)
-                             + BaUiWidePanelChrome.ToggleHudButtonLift;
-
-            _panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
-            _panelRect.anchoredPosition = BuildingHudLayout.GetToggleHudPosition(panelWidth, panelHeight);
-
-            if (_headerRect != null)
-                BaUiWidePanelChrome.UpdateToggleHudFrames(_panelRect, _headerRect, panelWidth);
-
-            if (_titleRect != null)
-                BaUiWidePanelChrome.ApplyHeaderTitleInsets(_titleRect, scale);
-
-            if (_titleLabel != null)
-                BaUiWidePanelChrome.ApplyHudTitleStyle(_titleLabel, scale);
-
-            if (_toggleButtonRect != null)
-            {
-                _toggleButtonRect.anchoredPosition = new Vector2(0f, buttonTopY);
-                _toggleButtonRect.sizeDelta = new Vector2(buttonWidth, BaUiWidePanelChrome.ToggleHudButtonHeight);
-            }
-
-            if (_toggleLabel != null)
-                _toggleLabel.fontSize = BaUiWidePanelChrome.HudButtonFontSize * scale;
+            var panelHeight = BaUi.Layout.CreateMetrics(1f).PanelHeight;
+            if (_dragState == null || (!_dragState.HasSavedPosition && !_dragState.IsDragging))
+                _panelRect.anchoredPosition = BuildingHudLayout.GetToggleHudPosition(panelWidth, panelHeight);
         }
 
         internal static void RefreshVisual()
@@ -152,10 +123,26 @@ namespace AutoShopping
 
             var mainOpen = AutoShoppingPanel.IsVisible;
             if (_toggleLabel != null)
-                _toggleLabel.text = mainOpen ? ModUiText.BtnHide : ModUiText.BtnShow;
+            {
+                var label = mainOpen ? ModUiText.BtnHide : ModUiText.BtnShow;
+                _toggleLabel.text = AutoShoppingShortcuts.AddToggleButtonHint(label);
+            }
         }
 
         private static void OnToggleClicked()
+        {
+            TryTogglePanel();
+        }
+
+        internal static void TryInvokeToggleShortcut()
+        {
+            if (AutoShoppingPanel.IsSearchFocused)
+                return;
+
+            TryTogglePanel();
+        }
+
+        private static void TryTogglePanel()
         {
             if (!GameState.ShouldShowStoreShoppingUi())
                 return;
@@ -177,11 +164,8 @@ namespace AutoShopping
             Object.Destroy(_root);
             _root = null;
             _panelRect = null;
-            _headerRect = null;
-            _titleRect = null;
-            _toggleButtonRect = null;
+            _dragState = null;
             _titleLabel = null;
-            _toggleButtonImage = null;
             _toggleLabel = null;
             _forceApply = true;
             _lastActive = false;
@@ -208,7 +192,9 @@ namespace AutoShopping
                          "AutoShopping_ToggleHud_v0131",
                          "AutoShopping_ToggleHud_v0132",
                          "AutoShopping_ToggleHud_v0133",
-                         "AutoShopping_ToggleHud_v0134"
+                         "AutoShopping_ToggleHud_v0134",
+                         "AutoShopping_ToggleHud_v0135",
+                         "AutoShopping_ToggleHud_v0136"
                      })
             {
                 var legacy = GameObject.Find(legacyName);

@@ -64,7 +64,7 @@ namespace AutoShopping
             {
                 ModUiText.PollLanguageChange();
                 PollVisibility();
-                PollToggleKey();
+                AutoShoppingShortcuts.Tick();
                 StoreItemRouteService.Tick();
             }
 
@@ -189,32 +189,6 @@ namespace AutoShopping
             {
                 return false;
             }
-        }
-
-        private void PollToggleKey()
-        {
-            using (ModPerf.Measure("poll.toggle_key"))
-            {
-                PollToggleKeyCore();
-            }
-        }
-
-        private void PollToggleKeyCore()
-        {
-            // GetKeyDown is true for one frame only — must check every Update, not on a timer.
-            if (!Input.GetKeyDown(KeyCode.F8))
-                return;
-
-            if (!GameState.IsWorldReady())
-                return;
-
-            if (AutoShoppingPanel.IsSearchFocused)
-                return;
-
-            if (!GameState.ShouldShowStoreShoppingUi())
-                return;
-
-            AutoShoppingPanel.Toggle();
         }
 
         private void OnGameEvent(string gameEvent)

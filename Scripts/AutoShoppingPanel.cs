@@ -1,5 +1,6 @@
 using Capisoft.Lib.BaUnifiedUI.Chrome;
 using Capisoft.Lib.BaUnifiedUI.Core;
+using Capisoft.Lib.BaUnifiedUI.Fluent;
 using System.Collections.Generic;
 using Helpers;
 using TMPro;
@@ -11,7 +12,8 @@ namespace AutoShopping
 {
     internal static class AutoShoppingPanel
     {
-        private const string RootName = "AutoShopping_Panel_v0134";
+        private const string RootName = "AutoShopping_Panel_v0136";
+        private const string DragPositionId = "AutoShopping.MainPanel";
         private const float StatusFontSize = 15f;
         private const float RowHeight = 50f;
         private const float IconColumnWidth = 48f;
@@ -59,8 +61,7 @@ namespace AutoShopping
         private static GameObject _root;
         private static RectTransform _panelRect;
         private static RectTransform _headerRect;
-        private static RectTransform _closeButtonRect;
-        private static RectTransform _titleRect;
+        private static BaUiDragState _dragState;
         private static TextMeshProUGUI _titleLabel;
         private static TextMeshProUGUI _statusLabel;
         private static TextMeshProUGUI _colItemLabel;
@@ -73,6 +74,9 @@ namespace AutoShopping
         private static TextMeshProUGUI _totalPrefixLabel;
         private static TextMeshProUGUI _totalValueLabel;
         private static TextMeshProUGUI _balanceLabel;
+        private static TextMeshProUGUI _clearButtonLabel;
+        private static TextMeshProUGUI _payButtonLabel;
+        private static TextMeshProUGUI _cancelActionsButtonLabel;
         private static RectTransform _statusRect;
         private static RectTransform _scrollContent;
         private static TMP_InputField _searchField;
@@ -121,35 +125,40 @@ namespace AutoShopping
             if (_root != null)
                 return;
 
-            BaUiWidePanelChrome.EnsureInitialized();
-            _root = new GameObject(RootName);
-            Object.DontDestroyOnLoad(_root);
-            BaUiWidePanelChrome.SetupOverlayCanvas(_root, 9005, interactive: true);
+            BaUi.EnsureReady();
+            var initialPosition = BuildingHudLayout.GetMainPanelPosition(FixedPanelHeight);
+            var built = BaUi
+                .Overlay(RootName, 9005)
+                .Dock(BaDock.BottomLeft, BuildingHudLayout.MainPanelLeftMargin, initialPosition.y)
+                .Panel(
+                    BaPanelRecipe.MainPanel,
+                    BuildingHudLayout.GetMainPanelWidth(),
+                    height: FixedPanelHeight)
+                .Draggable(DragPositionId)
+                .Header(header => header
+                    .TitleLeft(
+                        ModUiText.FormatPanelTitle(StoreSession.Current?.Profile?.BusinessDisplayName),
+                        upperCase: true)
+                    .CloseButton(Hide))
+                .SkipBody()
+                .Build();
 
-            _panelRect = BaUiWidePanelChrome.BuildPanel(
-                _root.transform,
-                BuildingHudLayout.GetMainPanelWidth(),
-                FixedPanelHeight,
-                "AutoShoppingPanel",
-                out var header);
-            _headerRect = header;
-            BaUiWidePanelChrome.ConfigureBottomLeftHudAnchor(_panelRect);
-
-            _closeButtonRect = BaUiWidePanelChrome.CreateHeaderCloseButton(header, Hide).GetComponent<RectTransform>();
-
-            var titleGo = new GameObject("Title", typeof(RectTransform));
-            titleGo.transform.SetParent(header, false);
-            _titleRect = titleGo.GetComponent<RectTransform>();
-            _titleLabel = titleGo.AddComponent<TextMeshProUGUI>();
-            BaUiWidePanelChrome.ApplyTitleStyle(_titleLabel, 1f);
-            _titleLabel.overflowMode = TextOverflowModes.Ellipsis;
-            ApplyHeaderTitleLayout(1f);
+            _root = built.Root;
+            _panelRect = built.Panel;
+            _headerRect = built.Header;
+            _dragState = built.Drag;
+            var titleTransform = _headerRect.Find("Title");
+            _titleLabel = titleTransform != null
+                ? titleTransform.GetComponent<TextMeshProUGUI>()
+                : null;
+            if (_titleLabel != null)
+                _titleLabel.overflowMode = TextOverflowModes.Ellipsis;
             BuildCartBar();
             BuildSearchBar();
             BuildListColumnHeaders();
             BuildScrollArea();
             BuildFooter();
-            BaUiWidePanelChrome.ApplyUiLayer(_root);
+            BaUi.ApplyLayer(_root);
             ApplyLayoutIfNeeded(force: true);
 
             _root.SetActive(false);
@@ -462,9 +471,16 @@ namespace AutoShopping
             actionsLayout.childForceExpandWidth = true;
             actionsLayout.padding = new RectOffset((int)padH.x, (int)padH.x, 0, 0);
 
-            BaUiWidePanelChrome.CreateButton(actionsRow.transform, ModUiText.BtnClear, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnClearClicked);
-            BaUiWidePanelChrome.CreateRedButton(actionsRow.transform, ModUiText.BtnPay, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnPayClicked);
-            BaUiWidePanelChrome.CreateButton(actionsRow.transform, ModUiText.BtnCancelQueue, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnCancelQueueClicked);
+            _clearButtonLabel = BaUiWidePanelChrome
+                .CreateButton(actionsRow.transform, ModUiText.BtnClear, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnClearClicked)
+                .GetComponentInChildren<TextMeshProUGUI>();
+            _payButtonLabel = BaUiWidePanelChrome
+                .CreateRedButton(actionsRow.transform, ModUiText.BtnPay, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnPayClicked)
+                .GetComponentInChildren<TextMeshProUGUI>();
+            _cancelActionsButtonLabel = BaUiWidePanelChrome
+                .CreateButton(actionsRow.transform, ModUiText.BtnCancelQueue, 10f, BaUiWidePanelChrome.PrimaryButtonHeight, OnCancelQueueClicked)
+                .GetComponentInChildren<TextMeshProUGUI>();
+            RefreshShortcutHints();
 
             var statusGo = new GameObject("Status", typeof(RectTransform));
             statusGo.transform.SetParent(footer.transform, false);
@@ -641,7 +657,21 @@ namespace AutoShopping
                 _colQtyLabel.text = ModUiText.ColQty;
             if (_totalPrefixLabel != null)
                 _totalPrefixLabel.text = ModUiText.TotalLabel;
+            RefreshShortcutHints();
             RefreshAll();
+        }
+
+        internal static void RefreshShortcutHints()
+        {
+            if (_clearButtonLabel != null)
+                _clearButtonLabel.text = AutoShoppingShortcuts.AddClearButtonHint(ModUiText.BtnClear);
+            if (_payButtonLabel != null)
+                _payButtonLabel.text = AutoShoppingShortcuts.AddPayButtonHint(ModUiText.BtnPay);
+            if (_cancelActionsButtonLabel != null)
+            {
+                _cancelActionsButtonLabel.text =
+                    AutoShoppingShortcuts.AddCancelActionsButtonHint(ModUiText.BtnCancelQueue);
+            }
         }
 
         internal static void RefreshAll()
@@ -743,32 +773,11 @@ namespace AutoShopping
             _lastLayoutWidth = panelWidth;
 
             _panelRect.sizeDelta = new Vector2(panelWidth, panelHeight);
-            _panelRect.anchoredPosition = new Vector2(panelPos.x, panelBottom);
+            if (_dragState == null || (!_dragState.HasSavedPosition && !_dragState.IsDragging))
+                _panelRect.anchoredPosition = new Vector2(panelPos.x, panelBottom);
 
-            var scale = BaUiWidePanelChrome.GetScale(panelWidth);
             BaUiWidePanelChrome.UpdatePanelFrames(_panelRect, _headerRect, panelWidth);
-            BaUiWidePanelChrome.ApplyHeaderCloseButtonLayout(_closeButtonRect, scale);
-            ApplyHeaderTitleLayout(scale);
             ApplyStatusStyle();
-        }
-
-        private static void ApplyHeaderTitleLayout(float scale)
-        {
-            if (_titleRect == null || _titleLabel == null)
-                return;
-
-            var titleScale = Mathf.Clamp(scale, 0.85f, 1.15f);
-            var padY = BaUiWidePanelChrome.HeaderTextPaddingY * titleScale;
-            var closeReserve = BaUiWidePanelChrome.HeaderCloseButtonSize + 14f * titleScale;
-
-            _titleRect.anchorMin = Vector2.zero;
-            _titleRect.anchorMax = Vector2.one;
-            BaUiWidePanelChrome.ApplyHeaderTitleInsets(_titleRect, titleScale);
-            _titleRect.offsetMax = new Vector2(-closeReserve, -padY);
-
-            var storeName = StoreSession.Current?.Profile?.BusinessDisplayName;
-            _titleLabel.text = ModUiText.FormatPanelTitle(storeName);
-            BaUiWidePanelChrome.ApplyTitleStyle(_titleLabel, titleScale);
         }
 
         private static void ApplyStatusStyle()
@@ -1258,6 +1267,39 @@ namespace AutoShopping
             _queue?.Cancel();
         }
 
+        internal static bool TryInvokeClearShortcut()
+        {
+            if (!CanInvokeActionShortcut())
+                return false;
+
+            OnClearClicked();
+            return true;
+        }
+
+        internal static bool TryInvokePayShortcut()
+        {
+            if (!CanInvokeActionShortcut())
+                return false;
+
+            OnPayClicked();
+            return true;
+        }
+
+        internal static bool TryInvokeCancelActionsShortcut()
+        {
+            if (!CanInvokeActionShortcut())
+                return false;
+
+            OnCancelQueueClicked();
+            return true;
+        }
+
+        private static bool CanInvokeActionShortcut() =>
+            IsVisible
+            && !IsSearchFocused
+            && GameState.ShouldShowStoreShoppingUi()
+            && StoreSession.Current != null;
+
         internal static void ReleaseUiFocus()
         {
             if (_searchField != null)
@@ -1291,7 +1333,9 @@ namespace AutoShopping
                          "AutoShopping_Panel_v0130",
                          "AutoShopping_Panel_v0131",
                          "AutoShopping_Panel_v0132",
-                         "AutoShopping_Panel_v0133"
+                         "AutoShopping_Panel_v0133",
+                         "AutoShopping_Panel_v0134",
+                         "AutoShopping_Panel_v0135"
                      })
             {
                 var legacy = GameObject.Find(legacyName);
@@ -1317,8 +1361,11 @@ namespace AutoShopping
             _root = null;
             _panelRect = null;
             _headerRect = null;
-            _closeButtonRect = null;
-            _titleRect = null;
+            _dragState = null;
+            _titleLabel = null;
+            _clearButtonLabel = null;
+            _payButtonLabel = null;
+            _cancelActionsButtonLabel = null;
             _scrollContent = null;
             _searchField = null;
             _searchPlaceholderLabel = null;
@@ -1326,6 +1373,7 @@ namespace AutoShopping
             _lastDisplayState = string.Empty;
             _sortColumn = SortColumn.None;
             _sortDirection = SortDirection.None;
+            _lastLayoutHeight = float.NaN;
             _lastLayoutWidth = float.NaN;
         }
 

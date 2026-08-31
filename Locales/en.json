@@ -53,10 +53,19 @@
   "autoshopping_error_nothing_to_pay": "Nothing to pay for.",
   "autoshopping_error_nothing_to_drop": "Nothing to drop.",
   "autoshopping_error_insufficient_funds": "Insufficient funds.",
-  "autoshopping_toggle_hint": "Press F8 to toggle Auto Shopping",
+  "autoshopping_toggle_hint": "Use the configured shortcut to toggle Auto Shopping",
   "autoshopping_options_header": "Auto Shopping",
   "autoshopping_option_auto_open_on_enter": "Open AutoShopping on entering shop",
   "autoshopping_option_auto_cart_on_enter": "Auto Cart on entering shop",
   "autoshopping_option_auto_pick_cart": "Auto pick cart",
-  "autoshopping_option_auto_pick_cart_on": "Auto cart ON"
+  "autoshopping_option_auto_pick_cart_on": "Auto cart ON",
+  "autoshopping_option_toggle_shortcut": "Show / hide shortcut",
+  "autoshopping_option_route_line_color": "Way to path color",
+  "autoshopping_color_picker_unavailable": "Color picker unavailable",
+  "autoshopping_option_clear_list_shortcut": "Clear list shortcut",
+  "autoshopping_option_pay_shortcut": "Pay shortcut",
+  "autoshopping_option_cancel_actions_shortcut": "Cancel actions shortcut",
+  "autoshopping_shortcut_unbound": "Unbound",
+  "autoshopping_shortcut_capture": "Press a key...",
+  "autoshopping_shortcut_conflict": "Conflict"
 }

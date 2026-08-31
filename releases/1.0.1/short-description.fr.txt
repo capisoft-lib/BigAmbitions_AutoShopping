@@ -1,0 +1,1 @@
+Auto Shopping 1.0.1 : catalogue en direct, itinéraires personnalisables, prise et dépôt des articles et passage en caisse automatisés. Les 22 langues du jeu. Big Ambitions EA 0.11 et 1.0 ; nécessite LIB BA Unified UI 1.0.0+.

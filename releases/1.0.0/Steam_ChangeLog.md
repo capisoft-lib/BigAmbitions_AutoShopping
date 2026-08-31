@@ -1,0 +1,13 @@
+- Released one Auto Shopping 1.0.0 package for Big Ambitions EA 0.11 and 1.0
+- Moved the shared interface to the separate LIB BA Unified UI 1.0.0+ Workshop dependency
+- Added Russian localization alongside English and French
+- Added a persistent native color picker for the Way to floor route under Options > Mods
+- Added configurable shortcuts for Show/Hide, Clear list, Pay and Cancel actions
+- Shows assigned shortcuts directly in the matching HUD and footer buttons
+- Rebuilt the catalog with BAUI's fluent MainPanel recipe and expanded Show/Hide to the same 370 px ActionPanel recipe as VoogleRoute
+- Made the in-store shopping window draggable from its header with a saved position
+- Prevented action shortcuts from firing while the panel is unavailable or search is focused
+- Fixed the oversized magenta Way to route on Big Ambitions 1.0 and kept its color configurable
+- Validated with the current Big Ambitions 1.0 game assemblies and LIB BA Unified UI 1.0.1
+- Preserved catalog, shelf routing, automated pick/drop/payment and safe building-exit behavior
+- Built and installed through Unity 2022.3.62f2 and the official Big Ambitions Mod Builder

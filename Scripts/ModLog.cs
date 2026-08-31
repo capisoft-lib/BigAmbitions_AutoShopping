@@ -108,9 +108,11 @@ namespace AutoShopping
             try
             {
                 var path = Path.Combine(_logsDir, fileName);
-                File.AppendAllText(
-                    path,
-                    DateTime.UtcNow.ToString("o") + " [" + level + "] " + message + Environment.NewLine);
+                using (var writer = new StreamWriter(path, true))
+                {
+                    writer.Write(
+                        DateTime.UtcNow.ToString("o") + " [" + level + "] " + message + Environment.NewLine);
+                }
             }
             catch
             {

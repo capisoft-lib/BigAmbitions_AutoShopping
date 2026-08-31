@@ -1,0 +1,1 @@
+In-store catalog, customizable shelf routes and automated shopping for Big Ambitions EA 0.11 and 1.0. Requires LIB BA Unified UI 1.0.0+.
